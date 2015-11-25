@@ -30,6 +30,10 @@ const int WIFI_KEY_INDEX = 0;
 const char WIFI_PASS[] = "<YOUR-WPA-PASSWORD>";
 //// END WIFI SETTINGS
 
+// NOTE: this assumes DHCP
+
+const int RECONNECT_DELAY_MS = 10 * 1000;
+
 bool g_connected = false;   // used to monitor disconnects
 
 void safe_exit()
@@ -58,7 +62,7 @@ void print_mac_address()
     static byte mac[6];
     WiFi.macAddress(mac);
 
-    Serial.print("MAC: ");
+    Serial.print("MAC Address: ");
     Serial.print(mac[0], HEX);
     Serial.print(":");
     Serial.print(mac[1], HEX);
@@ -118,7 +122,7 @@ void connect_wifi()
         if(WL_CONNECTED != status) {
             Serial.print("Connection failed: ");
             Serial.println(status);
-            delay(10000);
+            delay(RECONNECT_DELAY_MS);
         }
     }
 
