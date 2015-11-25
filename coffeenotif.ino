@@ -18,6 +18,9 @@
 
 // https://www.arduino.cc/en/Guide/ArduinoZero
 
+// **** https://www.arduino.cc/en/Tutorial.Wifi101GoogleCalendar (great example!)
+// https://www.arduino.cc/en/Tutorial/WiFiWebClient
+
 #include <SPI.h>
 #include <WiFi101.h>
 #include "es_core.h"
