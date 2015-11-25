@@ -17,120 +17,26 @@
 */
 
 // https://www.arduino.cc/en/Guide/ArduinoZero
-// https://www.arduino.cc/en/Tutorial/Wifi101ConnectWithWPA
 
 #include <SPI.h>
 #include <WiFi101.h>
+#include "es_core.h"
+#include "es_wifi.h"
 
-//// WIFI SETTINGS
+//// WIFI SETTINGS (WPA2 Enterprise not supported)
 const wl_enc_type ENCRYPTION_TYPE = ENC_TYPE_NONE;
 const char WIFI_SSID[] = "<YOUR-SSID>";
 const char WIFI_KEY[] = "<YOUR-WEP-KEY>";
 const int WIFI_KEY_INDEX = 0;
 const char WIFI_PASS[] = "<YOUR-WPA-PASSWORD>";
-//// END WIFI SETTINGS
 
-// NOTE: this assumes DHCP
+const bool USE_DHCP = true;
+// TODO: add non-DHCP settings
 
 const int RECONNECT_DELAY_MS = 10 * 1000;
+//// END WIFI SETTINGS
 
 bool g_connected = false;   // used to monitor disconnects
-
-void safe_exit()
-{
-    // TODO: set a failure LED
-
-    // TODO: can we call exit() instead of hard-locking the controller?
-    while(true);
-}
-
-void init_serial()
-{
-    Serial.begin(9600);
-
-    // wait for serial port to connect
-    // (needed for native USB port only?)
-    while(true) {
-        if(Serial) {
-            break;
-        }
-    }
-}
-
-void print_mac_address()
-{
-    static byte mac[6];
-    WiFi.macAddress(mac);
-
-    Serial.print("MAC Address: ");
-    Serial.print(mac[0], HEX);
-    Serial.print(":");
-    Serial.print(mac[1], HEX);
-    Serial.print(":");
-    Serial.print(mac[2], HEX);
-    Serial.print(":");
-    Serial.print(mac[3], HEX);
-    Serial.print(":");
-    Serial.print(mac[4], HEX);
-    Serial.print(":");
-    Serial.println(mac[5], HEX);
-}
-
-void print_wifi_info()
-{
-    IPAddress ipAddres = WiFi.localIP();
-    Serial.print("IP Address: ");
-    Serial.println(ipAddres);
-}
-
-void connect_wifi()
-{
-    int status = WiFi.status();
-    if(WL_CONNECTED == status) {
-        return;
-    }
-
-    if(g_connected) {
-        Serial.println("WiFi disconnected!");
-        g_connected = false;
-    }
-
-    while(WL_CONNECTED != status) {
-        // TODO: set connecting LED
-
-        Serial.print("Attempting to connect to SSID: ");
-        Serial.println(WIFI_SSID);
-
-        switch(ENCRYPTION_TYPE)
-        {
-        case ENC_TYPE_NONE:
-            status = WiFi.begin(WIFI_SSID);
-            break;
-        case ENC_TYPE_WEP:
-            status = WiFi.begin(WIFI_SSID, WIFI_KEY_INDEX, WIFI_KEY);
-            break;
-        case ENC_TYPE_TKIP: // WPA
-        case ENC_TYPE_CCMP: // WPA2
-            status = WiFi.begin(WIFI_SSID, WIFI_PASS);
-            break;
-        default:
-            Serial.print("Unsupported encryption type: ");
-            Serial.println(ENCRYPTION_TYPE);
-            break;
-        }
-
-        if(WL_CONNECTED != status) {
-            Serial.print("Connection failed: ");
-            Serial.println(status);
-            delay(RECONNECT_DELAY_MS);
-        }
-    }
-
-    Serial.println("Connection successful!");
-    g_connected = true;
-    // TODO: set connected LED
-    print_wifi_info();
-}
 
 bool poll_button()
 {
@@ -147,13 +53,12 @@ void setup()
 {
     init_serial();
 
-    // verify we have the WiFi shield
-    if(WL_NO_SHIELD == WiFi.status()) {
-        Serial.println("WiFi shield not present!");
+    if(!init_wifi()) {
         safe_exit();
+        return;
     }
 
-    print_mac_address();
+    print_wifi_info();
 }
 
 void loop()
