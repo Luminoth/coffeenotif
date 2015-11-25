@@ -22,12 +22,15 @@
 #include <SPI.h>
 #include <WiFi101.h>
 
+//// WIFI SETTINGS
 const wl_enc_type ENCRYPTION_TYPE = ENC_TYPE_NONE;
-
 const char WIFI_SSID[] = "<YOUR-SSID>";
 const char WIFI_KEY[] = "<YOUR-WEP-KEY>";
 const int WIFI_KEY_INDEX = 0;
 const char WIFI_PASS[] = "<YOUR-WPA-PASSWORD>";
+//// END WIFI SETTINGS
+
+bool g_connected = false;   // used to monitor disconnects
 
 void safe_exit()
 {
@@ -56,17 +59,17 @@ void print_mac_address()
     WiFi.macAddress(mac);
 
     Serial.print("MAC: ");
-    Serial.print(mac[5], HEX);
-    Serial.print(":");
-    Serial.print(mac[4], HEX);
-    Serial.print(":");
-    Serial.print(mac[3], HEX);
-    Serial.print(":");
-    Serial.print(mac[2], HEX);
+    Serial.print(mac[0], HEX);
     Serial.print(":");
     Serial.print(mac[1], HEX);
     Serial.print(":");
-    Serial.println(mac[0], HEX);
+    Serial.print(mac[2], HEX);
+    Serial.print(":");
+    Serial.print(mac[3], HEX);
+    Serial.print(":");
+    Serial.print(mac[4], HEX);
+    Serial.print(":");
+    Serial.println(mac[5], HEX);
 }
 
 void print_wifi_info()
@@ -79,6 +82,15 @@ void print_wifi_info()
 void connect_wifi()
 {
     int status = WiFi.status();
+    if(WL_CONNECTED == status) {
+        return;
+    }
+
+    if(g_connected) {
+        Serial.println("WiFi disconnected!");
+        g_connected = false;
+    }
+
     while(WL_CONNECTED != status) {
         // TODO: set connecting LED
 
@@ -111,6 +123,7 @@ void connect_wifi()
     }
 
     Serial.println("Connection successful!");
+    g_connected = true;
     // TODO: set connected LED
     print_wifi_info();
 }
