@@ -14,20 +14,18 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="Solution Files">
-      <UniqueIdentifier>{fc769db6-6e01-4757-bd0e-096c8974ee08}</UniqueIdentifier>
+      <UniqueIdentifier>{7fde9878-320c-40d0-883b-899ce6bc1ec8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <None Include="coffeenotif.ino" />
     <None Include=".gitignore">
       <Filter>Solution Files</Filter>
     </None>
-    <None Include="coffeenotif.ino">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="README.md">
+    <None Include="LICENSE">
       <Filter>Solution Files</Filter>
     </None>
-    <None Include="LICENSE">
+    <None Include="README.md">
       <Filter>Solution Files</Filter>
     </None>
   </ItemGroup>
