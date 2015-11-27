@@ -40,13 +40,15 @@ namespace energonsoftware
         void set_use_dhcp(bool use_dhcp) { _use_dhcp = use_dhcp; }
         bool get_use_dhcp() const { return _use_dhcp; }
 
+// TODO: non-dhcp values
+
         void set_ssid(const String& ssid) { _ssid = ssid; }
         const String& get_ssid() const { return _ssid; }
 
         void set_encryption_type(int encryption_type) { _encryption_type = encryption_type; }
         int get_encryption_type() const { return _encryption_type; }
 
-        // TODO: access to the WEP values
+// TODO: access to the WEP values
 
         void set_wpa_password(const String& wpa_password) { _wpa_password = wpa_password; }
         const String& get_wpa_password() const { return _wpa_password; }

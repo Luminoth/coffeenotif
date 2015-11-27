@@ -32,7 +32,10 @@ const wl_enc_type ENCRYPTION_TYPE = ENC_TYPE_NONE;
 const char WIFI_SSID[] = "<YOUR-SSID>";
 const char WIFI_KEY[] = "<YOUR-WEP-KEY>";
 const int WIFI_KEY_INDEX = 0;
-const char WIFI_PASS[] = "<YOUR-WPA-PASSWORD>";
+const char WIFI_PASSWORD[] = "<YOUR-WPA-PASSWORD>";
+
+const bool USE_DHCP = true;
+// TODO: non-dhcp values
 //// END WIFI SETTINGS
 
 energonsoftware::WiFi g_wifi;
@@ -56,7 +59,13 @@ void setup()
 {
     energonsoftware::init_serial();
 
-// TODO: set values here
+    g_wifi.set_encryption_type(ENCRYPTION_TYPE);
+    g_wifi.set_ssid(WIFI_SSID);
+    // TODO: WEP values
+    g_wifi.set_wpa_password(WIFI_PASSWORD);
+
+    g_wifi.set_use_dhcp(USE_DHCP);
+    // TODO: non-dhcp values
 
     if(!g_wifi.init()) {
         energonsoftware::safe_exit();
