@@ -57,7 +57,7 @@ void notify_slack_channel()
 
 void setup()
 {
-    energonsoftware::init_serial();
+    energonsoftware::init_serial(115200);
 
     g_wifi.set_encryption_type(ENCRYPTION_TYPE);
     g_wifi.set_ssid(WIFI_SSID);
