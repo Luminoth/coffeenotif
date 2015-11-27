@@ -16,14 +16,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#if !defined __ES_CORE_H__
-#define __ES_CORE_H__
+#ifndef __ES_MAIN_H__
+#define __ES_MAIN_H__
 
-namespace energonsoftware
-{
-    void safe_exit(int ledPin=-1);
-
-    void init_serial(unsigned long baudRate=9600);
-}
 
 #endif

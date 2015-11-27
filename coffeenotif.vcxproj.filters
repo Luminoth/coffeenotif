@@ -39,12 +39,18 @@
     <ClInclude Include="es_core.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="es_main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="es_wifi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="es_core.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="es_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

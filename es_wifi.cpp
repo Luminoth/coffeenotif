@@ -16,131 +16,149 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include <Arduino.h>
 #include <WiFi101.h>
+#include "es_core.h"
 #include "es_wifi.h"
 
 // https://www.arduino.cc/en/Guide/ArduinoWiFiShield101
 // https://www.arduino.cc/en/Tutorial/Wifi101ConnectWithWPA
 
-// TODO: make a "settings" class or something for passing in the WiFi settings
-// rather than having a bunch of weird globals
-
-void print_wifi_firmware_version()
+namespace energonsoftware
 {
-    Serial.print("WiFi firmware version: ");
-    Serial.println(WiFi.firmwareVersion());
-}
-
-void print_wifi_mac_address()
-{
-    static byte mac[6];
-    WiFi.macAddress(mac);
-
-    Serial.print("MAC Address: ");
-    Serial.print(mac[0], HEX);
-    Serial.print(":");
-    Serial.print(mac[1], HEX);
-    Serial.print(":");
-    Serial.print(mac[2], HEX);
-    Serial.print(":");
-    Serial.print(mac[3], HEX);
-    Serial.print(":");
-    Serial.print(mac[4], HEX);
-    Serial.print(":");
-    Serial.println(mac[5], HEX);
-}
-
-void print_wifi_info()
-{
-    print_wifi_mac_address();
-    print_wifi_firmware_version();
-}
-
-void print_wifi_ip_address()
-{
-    IPAddress ipAddres = WiFi.localIP();
-    Serial.print("IP Address: ");
-    Serial.println(ipAddres);
-}
-
-void print_wifi_signal_strength()
-{
-    Serial.print("Signal strength (RSSI): ");
-    Serial.print(WiFi.RSSI());
-    Serial.println(" dBm");
-}
-
-void print_wifi_connection_info()
-{
-    print_wifi_ip_address();
-    print_wifi_signal_strength();
-}
-
-bool init_wifi()
-{
-    // verify we have the WiFi shield
-    if(WL_NO_SHIELD == WiFi.status()) {
-        Serial.println("WiFi shield not present!");
-        return false;
+    void WiFi::print_firmware_version()
+    {
+        Serial.print("WiFi firmware version: ");
+        Serial.println(::WiFi.firmwareVersion());
     }
 
-    Serial.println("Initializing WiFi...");
+    void WiFi::print_mac_address()
+    {
+        static byte mac[6];
+        ::WiFi.macAddress(mac);
 
-    if(!USE_DHCP) {
-        // TODO: use WiFi.config() to set the non-DHCP settings
-    } else {
-        Serial.println("Using DHCP...");
+        Serial.print("MAC Address: ");
+        Serial.print(mac[0], HEX);
+        Serial.print(":");
+        Serial.print(mac[1], HEX);
+        Serial.print(":");
+        Serial.print(mac[2], HEX);
+        Serial.print(":");
+        Serial.print(mac[3], HEX);
+        Serial.print(":");
+        Serial.print(mac[4], HEX);
+        Serial.print(":");
+        Serial.println(mac[5], HEX);
     }
 
-    return true;
-}
-
-void connect_wifi()
-{
-    int status = WiFi.status();
-    if(WL_CONNECTED == status) {
-        return;
+    void WiFi::print_shield_info()
+    {
+        print_firmware_version();
+        print_mac_address();
     }
 
-    if(g_connected) {
-        Serial.println("WiFi disconnected!");
-        g_connected = false;
+    void WiFi::print_ip_address()
+    {
+        IPAddress ipAddres = ::WiFi.localIP();
+        Serial.print("IP Address: ");
+        Serial.println(ipAddres);
     }
 
-    while(WL_CONNECTED != status) {
-        // TODO: set connecting LED
+    void WiFi::print_signal_strength()
+    {
+        Serial.print("Signal strength (RSSI): ");
+        Serial.print(::WiFi.RSSI());
+        Serial.println(" dBm");
+    }
 
-        Serial.print("Attempting to connect to SSID: ");
-        Serial.println(WIFI_SSID);
+    void WiFi::print_connection_info()
+    {
+        print_signal_strength();
+        print_ip_address();
+    }
 
-        switch(ENCRYPTION_TYPE)
-        {
-        case ENC_TYPE_NONE:
-            status = WiFi.begin(WIFI_SSID);
-            break;
-        case ENC_TYPE_WEP:
-            status = WiFi.begin(WIFI_SSID, WIFI_KEY_INDEX, WIFI_KEY);
-            break;
-        case ENC_TYPE_TKIP: // WPA
-        case ENC_TYPE_CCMP: // WPA2
-            status = WiFi.begin(WIFI_SSID, WIFI_PASS);
-            break;
-        default:
-            Serial.print("Unsupported encryption type: ");
-            Serial.println(ENCRYPTION_TYPE);
-            safe_exit();
-            break;
+    WiFi::WiFi()
+        : _use_dhcp(true),
+            _ssid(), _encryption_type(ENC_TYPE_NONE),
+            _wep_key(), _wep_key_index(0),
+            _wpa_password(),
+            _connected(false), _reconnect_delay_ms(10 * 1000)
+    {
+    }
+
+    bool WiFi::init()
+    {
+        // verify we have the WiFi shield
+        if(WL_NO_SHIELD == ::WiFi.status()) {
+            Serial.println("WiFi shield not present!");
+            return false;
         }
 
-        if(WL_CONNECTED != status) {
-            Serial.print("Connection failed: ");
-            Serial.println(status);
-            delay(RECONNECT_DELAY_MS);
+        Serial.println("Initializing WiFi...");
+
+        if(!_use_dhcp) {
+            // TODO: use WiFi.config() to set the non-DHCP settings
+        } else {
+            Serial.println("Using DHCP...");
         }
+
+        return true;
     }
 
-    Serial.println("Connection successful!");
-    g_connected = true;
-    // TODO: set connected LED
-    print_wifi_connection_info();
+    void WiFi::connect(int connectingLedPin, int connectedLedPin)
+    {
+        int status = ::WiFi.status();
+        if(WL_CONNECTED == status) {
+            return;
+        }
+
+        if(_connected) {
+            Serial.println("WiFi disconnected!");
+            _connected = false;
+        }
+
+        while(WL_CONNECTED != status) {
+            if(connectingLedPin > 0) {
+                // TODO: set connecting LED
+            }
+
+            Serial.print("Attempting to connect to SSID: ");
+            Serial.println(_ssid);
+
+            switch(_encryption_type)
+            {
+            case ENC_TYPE_NONE:
+                status = ::WiFi.begin(_ssid);
+                break;
+            case ENC_TYPE_WEP:
+                status = ::WiFi.begin(_ssid, _wep_key_index, _wep_key);
+                break;
+            case ENC_TYPE_TKIP: // WPA
+            case ENC_TYPE_CCMP: // WPA2
+                status = ::WiFi.begin(_ssid, _wpa_password);
+                break;
+            default:
+                Serial.print("Unsupported encryption type: ");
+                Serial.println(_encryption_type);
+                safe_exit();
+                break;
+            }
+
+            if(WL_CONNECTED != status) {
+                Serial.print("Connection failed: ");
+                Serial.println(status);
+                delay(_reconnect_delay_ms);
+            }
+        }
+
+        Serial.println("Connection successful!");
+        _connected = true;
+
+        if(connectedLedPin > 0) {
+            // TODO: set connected LED
+        }
+
+        // TODO: move this to the caller
+        print_connection_info();
+    }
 }

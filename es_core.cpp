@@ -16,26 +16,31 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <arduino.h>
+#include <Arduino.h>
 #include "es_core.h"
 
-void safe_exit()
+namespace energonsoftware
 {
-    // TODO: set a failure LED
+    void safe_exit(int ledPin)
+    {
+        if(ledPin > 0) {
+            // TODO: set a failure LED
+        }
 
-    // TODO: can we call exit() instead of hard-locking the controller?
-    while(true);
-}
+        // TODO: can we call exit() instead of hard-locking the controller?
+        while(true);
+    }
 
-void init_serial()
-{
-    Serial.begin(9600);
+    void init_serial(unsigned long baudRate)
+    {
+        Serial.begin(baudRate);
 
-    // wait for serial port to connect
-    // (needed for native USB port only?)
-    while(true) {
-        if(Serial) {
-            break;
+        // wait for serial port to connect
+        // (needed for native USB port only?)
+        while(true) {
+            if(Serial) {
+                break;
+            }
         }
     }
 }

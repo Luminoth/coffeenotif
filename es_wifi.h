@@ -19,19 +19,57 @@
 #if !defined __ES_WIFI_H__
 #define __ES_WIFI_H__
 
-// NOTE: WiFi101 shield uses digital pins 5, 6, 7 and should not be used
-// the docs say pins 11, 12, and 13 are used for SPI but they're safe to re-use, I guess?
-// and pin 10 is slave select
+namespace energonsoftware
+{
+    class WiFi
+    {
+    public:
+        static void print_firmware_version();
+        static void print_mac_address();
+        static void print_shield_info();
 
-void print_wifi_firmware_version();
-void print_wifi_mac_address();
-void print_wifi_info();
+        static void print_ip_address();
+        static void print_signal_strength();
+        static void print_connection_info();
 
-void print_wifi_ip_address();
-void print_wifi_signal_strength();
-void print_wifi_connection_info();
+    public:
+        WiFi();
+        virtual ~WiFi() throw() { }
 
-bool init_wifi();
-void connect_wifi();
+    public:
+        void set_use_dhcp(bool use_dhcp) { _use_dhcp = use_dhcp; }
+        bool get_use_dhcp() const { return _use_dhcp; }
+
+        void set_ssid(const String& ssid) { _ssid = ssid; }
+        const String& get_ssid() const { return _ssid; }
+
+        void set_encryption_type(int encryption_type) { _encryption_type = encryption_type; }
+        int get_encryption_type() const { return _encryption_type; }
+
+        // TODO: access to the WEP values
+
+        void set_wpa_password(const String& wpa_password) { _wpa_password = wpa_password; }
+        const String& get_wpa_password() const { return _wpa_password; }
+
+    public:
+        bool init();
+        void connect(int connectingLedPin=-1, int connectedLedPin=-1);
+
+    private:
+        bool _use_dhcp;
+
+// TODO: add non-dhcp settings
+
+        String _ssid;
+
+        int _encryption_type;
+        String _wep_key;
+        int _wep_key_index;
+        String _wpa_password;
+
+        bool _connected;
+        unsigned int _reconnect_delay_ms;
+    };
+}
 
 #endif

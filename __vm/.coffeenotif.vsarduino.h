@@ -69,6 +69,8 @@ extern "C" void __cxa_pure_virtual() {;}
 #include <..\coffeenotif\coffeenotif.ino>
 #include <..\coffeenotif\es_core.cpp>
 #include <..\coffeenotif\es_core.h>
+#include <..\coffeenotif\es_main.cpp>
+#include <..\coffeenotif\es_main.h>
 #include <..\coffeenotif\es_wifi.cpp>
 #include <..\coffeenotif\es_wifi.h>
 #endif

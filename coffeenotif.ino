@@ -16,59 +16,5 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-// https://www.arduino.cc/en/Guide/ArduinoZero
-
-// **** https://www.arduino.cc/en/Tutorial.Wifi101GoogleCalendar (great example!)
-// https://www.arduino.cc/en/Tutorial/WiFiWebClient
-
 #include <SPI.h>
 #include <WiFi101.h>
-#include "es_core.h"
-#include "es_wifi.h"
-
-//// WIFI SETTINGS (WPA2 Enterprise not supported)
-const wl_enc_type ENCRYPTION_TYPE = ENC_TYPE_NONE;
-const char WIFI_SSID[] = "<YOUR-SSID>";
-const char WIFI_KEY[] = "<YOUR-WEP-KEY>";
-const int WIFI_KEY_INDEX = 0;
-const char WIFI_PASS[] = "<YOUR-WPA-PASSWORD>";
-
-const bool USE_DHCP = true;
-// TODO: add non-DHCP settings
-
-const int RECONNECT_DELAY_MS = 10 * 1000;
-//// END WIFI SETTINGS
-
-bool g_connected = false;   // used to monitor disconnects
-
-bool poll_button()
-{
-    // TODO
-    return false;
-}
-
-void notify_slack_channel()
-{
-    // TODO
-}
-
-void setup()
-{
-    init_serial();
-
-    if(!init_wifi()) {
-        safe_exit();
-        return;
-    }
-
-    print_wifi_info();
-}
-
-void loop()
-{
-    connect_wifi();
-
-    if(poll_button()) {
-        notify_slack_channel();
-    }
-}
