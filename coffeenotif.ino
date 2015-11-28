@@ -42,12 +42,12 @@ const IPAddress IP_ADDRESS(127, 0, 0, 1);
 
 //// NTP SETTINGS
 const uint16_t LOCAL_NTP_PORT = 2123;
-const String NTP_HOST("us.pool.ntp.org");
+const String NTP_HOST("pool.ntp.org");
 //// END NTP SETTINGS
 
 energonsoftware::WiFi g_wifi;
 
-energonsoftware::Ntp g_ntp;
+RTCZero rtc;
 const int NTP_UPDATE_RATE_MS = 1 * 60 * 60 * 1000;  // 1 hour updates
 unsigned long g_last_ntp_update_ms = 0;
 
@@ -58,11 +58,12 @@ unsigned long g_last_ntp_update_ms = 0;
 void update_rtc()
 {
     unsigned long current_ms = millis();
-    if(g_last_ntp_update_ms + NTP_UPDATE_RATE_MS >= current_ms) {
+    if(g_last_ntp_update_ms > 0 && g_last_ntp_update_ms + NTP_UPDATE_RATE_MS >= current_ms) {
         return;
     }
 
-    g_ntp.set_rtc(g_wifi, LOCAL_NTP_PORT, NTP_HOST);
+    static energonsoftware::Ntp ntp;
+    ntp.set_rtc(rtc, g_wifi, LOCAL_NTP_PORT, NTP_HOST);
     g_last_ntp_update_ms = current_ms;
 }
 

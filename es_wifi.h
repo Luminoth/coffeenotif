@@ -32,6 +32,7 @@ namespace energonsoftware
         static void print_mac_address();
         static void print_shield_info();
 
+        static void print_ssid();
         static void print_ip_address();
         static void print_signal_strength();
         static void print_connection_info();
@@ -81,8 +82,13 @@ namespace energonsoftware
 
     public:
         virtual bool begin_udp(uint16_t local_port) override;
-        virtual bool send_udp_packet(const String& host, uint16_t remote_port, const byte* const buffer, size_t buffer_len) override;
         virtual void end_udp() override;
+
+        virtual bool send_udp_packet(const String& host, uint16_t remote_port, const byte* const buffer, size_t buffer_len) override;
+        bool send_udp_packet(const IPAddress& address, uint16_t remote_port, const byte* const buffer, size_t buffer_len);
+        virtual int udp_available() override;
+        virtual bool parse_udp_packet() override;
+        virtual bool read_udp_packet(byte* const buffer, size_t buffer_len) override;
 
     private:
         bool _use_dhcp;
@@ -96,7 +102,7 @@ namespace energonsoftware
         String _wpa_password;
 
         bool _connected;
-        unsigned int _reconnect_delay_ms;
+        uint32_t _reconnect_delay_ms;
 
         WiFiClient _client;
         WiFiUDP _udp;

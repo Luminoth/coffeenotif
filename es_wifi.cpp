@@ -56,6 +56,12 @@ namespace energonsoftware
         print_mac_address();
     }
 
+    void WiFi::print_ssid()
+    {
+        Serial.print("SSID: ");
+        Serial.println(::WiFi.SSID());
+    }
+
     void WiFi::print_ip_address()
     {
         const IPAddress local_ip(::WiFi.localIP());
@@ -81,6 +87,7 @@ namespace energonsoftware
 
     void WiFi::print_connection_info()
     {
+        print_ssid();
         print_signal_strength();
         print_ip_address();
     }
@@ -119,7 +126,7 @@ namespace energonsoftware
 
     void WiFi::connect(int connecting_led_pin, int connected_led_pin)
     {
-        int status = ::WiFi.status();
+        uint8_t status = ::WiFi.status();
         if(WL_CONNECTED == status) {
             return;
         }
@@ -134,8 +141,7 @@ namespace energonsoftware
                 // TODO: set connecting LED
             }
 
-            Serial.print("Attempting to connect to SSID: ");
-            Serial.println(_ssid);
+            Serial.println("Attempting to connect to SSID: " + _ssid);
 
             switch(_encryption_type)
             {
@@ -175,49 +181,102 @@ namespace energonsoftware
 
     void WiFi::disconnect()
     {
+        Serial.println("Disconnecting WiFi...");
         ::WiFi.disconnect();
         _connected = false;
     }
 
     bool WiFi::connect_server(const String& host, uint16_t port)
     {
+        Serial.println("Connecting to host: " + host + ":" + port + "...");
         return _client.connect(host.c_str(), port) > 0;
     }
 
     bool WiFi::connect_server(const IPAddress& address, uint16_t port)
     {
+        Serial.print("Connecting to address: ");
+        Serial.print(address);
+        Serial.print(":");
+        Serial.print(port);
+        Serial.println("...");
         return _client.connect(address, port) > 0;
     }
 
     void WiFi::disconnect_server()
     {
+        Serial.println("Disconnecting from server...");
         _client.stop();
     }
 
     bool WiFi::begin_udp(uint16_t local_port)
     {
+        Serial.print("UDP listen: ");
+        Serial.println(local_port);
         return _udp.begin(local_port) > 0;
+    }
+
+    void WiFi::end_udp()
+    {
+        Serial.println("Stopping UDP...");
+        _udp.stop();
     }
 
     bool WiFi::send_udp_packet(const String& host, uint16_t remote_port, const byte* const buffer, size_t buffer_len)
     {
+        Serial.println("Sending UDP packet to " + host + ":" + remote_port + " (" + buffer_len + ")");
+
         if(_udp.beginPacket(host.c_str(), remote_port) < 1) {
+            Serial.println("Failed to connect to UDP host!");
             return false;
         }
 
-        if(_udp.write(buffer, buffer_len) < 1) {
-            return false;
-        }
+        _udp.write(buffer, buffer_len);
 
         if(_udp.endPacket() < 1) {
+            Serial.println("Failed to send UDP packet!");
             return false;
         }
 
         return true;
     }
 
-    void WiFi::end_udp()
+    bool WiFi::send_udp_packet(const IPAddress& address, uint16_t remote_port, const byte* const buffer, size_t buffer_len)
     {
-        _udp.stop();
+        Serial.print("Sending UDP packet to ");
+        Serial.print(address);
+        Serial.print(":");
+        Serial.print(remote_port);
+        Serial.print(" (");
+        Serial.print(buffer_len);
+        Serial.println((")");
+
+        if(_udp.beginPacket(address, remote_port) < 1) {
+            Serial.println("Failed to connect to UDP address!");
+            return false;
+        }
+
+        _udp.write(buffer, buffer_len);
+
+        if(_udp.endPacket() < 1) {
+            Serial.println("Failed to send UDP packet!");
+            return false;
+        }
+
+        return true;
+    }
+
+    int WiFi::udp_available()
+    {
+        return _udp.available();
+    }
+
+    bool WiFi::parse_udp_packet()
+    {
+        return _udp.parsePacket() > 0;
+    }
+
+    bool WiFi::read_udp_packet(byte* const buffer, size_t buffer_len)
+    {
+        return _udp.read(buffer, buffer_len) > 0;
     }
 }

@@ -33,8 +33,13 @@ namespace energonsoftware
 
     public:
         virtual bool begin_udp(uint16_t local_port) = 0;
-        virtual bool send_udp_packet(const String& host, uint16_t port, const byte* const buffer, size_t buffer_len) = 0;
         virtual void end_udp() = 0;
+
+        virtual bool send_udp_packet(const String& host, uint16_t port, const byte* const buffer, size_t buffer_len) = 0;
+
+        virtual int udp_available() = 0;
+        virtual bool parse_udp_packet() = 0;
+        virtual bool read_udp_packet(byte* const buffer, size_t buffer_len) = 0;
     };
 
     class UdpWrapper

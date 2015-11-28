@@ -19,6 +19,7 @@
 #if !defined __ES_NTP_H__
 #define __ES_NTP_H__
 
+#include <RTCZero.h>
 #include "es_network.h"
 
 namespace energonsoftware
@@ -28,16 +29,23 @@ namespace energonsoftware
     private:
         static const int NtpPacketSize = 48;
         static const uint16_t NtpPort = 123;
+        static const uint32_t TimeoutMs = 60 * 1000;
+
+        // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
+        static const unsigned long SeventyYears = 2208988800UL;
 
     private:
-        static bool send_packet(UdpWrapper& udp, const String& host);
+        static bool send_packet(UdpWrapper& udp, const String& host, byte* const buffer);
+        static bool recv_packet(UdpWrapper& udp, byte* const buffer);
+
+        static unsigned long parse_epoch(const byte* const buffer);
 
     public:
         Ntp() { }
         virtual ~Ntp() throw() { }
 
     public:
-        bool set_rtc(INetwork& network, uint16_t local_port, const String& host);
+        bool set_rtc(RTCZero& rtc, INetwork& network, uint16_t local_port, const String& host);
     };
 }
 
