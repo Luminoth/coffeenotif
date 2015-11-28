@@ -25,12 +25,19 @@ namespace energonsoftware
 {
     class Ntp
     {
+    private:
+        static const int NtpPacketSize = 48;
+        static const uint16_t NtpPort = 123;
+
+    private:
+        static bool send_packet(UdpWrapper& udp, const String& host);
+
     public:
-        Ntp();
+        Ntp() { }
         virtual ~Ntp() throw() { }
 
     public:
-        void set_rtc(const INetwork& network);
+        bool set_rtc(INetwork& network, uint16_t local_port, const String& host);
     };
 }
 

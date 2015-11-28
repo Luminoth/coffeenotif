@@ -28,9 +28,41 @@ namespace energonsoftware
         virtual ~INetwork() throw() { }
 
     public:
-        virtual void connect_server(const String& host, uint16_t port) = 0;
-
+        virtual bool connect_server(const String& host, uint16_t port) = 0;
         virtual void disconnect_server() = 0;
+
+    public:
+        virtual bool begin_udp(uint16_t local_port) = 0;
+        virtual bool send_udp_packet(const String& host, uint16_t port, const byte* const buffer, size_t buffer_len) = 0;
+        virtual void end_udp() = 0;
+    };
+
+    class UdpWrapper
+    {
+    public:
+        UdpWrapper(INetwork& network, uint16_t local_port)
+            : _network(network), _valid(false)
+        {
+            _valid = _network.begin_udp(local_port);
+        }
+
+        virtual ~UdpWrapper() throw()
+        {
+            _network.end_udp();
+        }
+
+    public:
+        bool is_valid() const { return _valid; }
+
+        INetwork& network() const { return _network; }
+
+    private:
+        INetwork& _network;
+        bool _valid;
+
+    private:
+        UdpWrapper() = delete;
+        UdpWrapper(const UdpWrapper&) = delete;
     };
 }
 

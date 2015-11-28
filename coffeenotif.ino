@@ -31,14 +31,19 @@
 
 //// WIFI SETTINGS (WPA2 Enterprise not supported)
 const wl_enc_type ENCRYPTION_TYPE = ENC_TYPE_CCMP;
-const char WIFI_SSID[] = "unicron";
+const char WIFI_SSID[] = "<YOUR-SSID>";
 const char WIFI_KEY[] = "<YOUR-WEP-KEY>";
 const int WIFI_KEY_INDEX = 0;
-const char WIFI_PASSWORD[] = "cibertr0n";
+const char WIFI_PASSWORD[] = "<YOUR-WPA-PASSWORD>";
 
 const bool USE_DHCP = true;
 const IPAddress IP_ADDRESS(127, 0, 0, 1);
 //// END WIFI SETTINGS
+
+//// NTP SETTINGS
+const uint16_t LOCAL_NTP_PORT = 2123;
+const String NTP_HOST("us.pool.ntp.org");
+//// END NTP SETTINGS
 
 energonsoftware::WiFi g_wifi;
 
@@ -57,7 +62,7 @@ void update_rtc()
         return;
     }
 
-    g_ntp.set_rtc(g_wifi);
+    g_ntp.set_rtc(g_wifi, LOCAL_NTP_PORT, NTP_HOST);
     g_last_ntp_update_ms = current_ms;
 }
 

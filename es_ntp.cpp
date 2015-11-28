@@ -24,13 +24,41 @@
 
 namespace energonsoftware
 {
-    Ntp::Ntp()
+    bool Ntp::send_packet(UdpWrapper& udp, const String& host)
     {
+        static byte buffer[NtpPacketSize];
+        memset(buffer, 0, NtpPacketSize);
+        buffer[0] = 0b11100011;     // LI, Version, Mode
+        buffer[1] = 0;              // Stratum, or type of clock
+        buffer[2] = 6;              // Polling Interval
+        buffer[3] = 0xEC;           // Peer Clock Precision
+        // 8 bytes of zero for Root Delay & Root Dispersion
+        buffer[12]  = 49;
+        buffer[13]  = 0x4E;
+        buffer[14]  = 49;
+        buffer[15]  = 52;
+
+        if(!udp.network().send_udp_packet(host, NtpPort, buffer, NtpPacketSize)) {
+            return false;
+        }
+
+        return true;
     }
 
-    void Ntp::set_rtc(const INetwork& network)
+    bool Ntp::set_rtc(INetwork& network, uint16_t local_port, const String& host)
     {
         RTCZero rtc;
         rtc.begin();
+
+        UdpWrapper udp(network, local_port);
+        if(!udp.is_valid()) {
+            return false;
+        }
+
+        if(!send_packet(udp, host)) {
+            return false;
+        }
+
+        return true;
     }
 }

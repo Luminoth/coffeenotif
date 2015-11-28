@@ -86,12 +86,13 @@ namespace energonsoftware
     }
 
     WiFi::WiFi()
-        : _use_dhcp(true), _ip_address(), _dns_server(), _gateway(), _subnet(),
+        : INetwork(),
+            _use_dhcp(true), _ip_address(), _dns_server(), _gateway(), _subnet(),
             _ssid(), _encryption_type(ENC_TYPE_NONE),
             _wep_key(), _wep_key_index(0),
             _wpa_password(),
             _connected(false), _reconnect_delay_ms(10 * 1000),
-            _client()
+            _client(), _udp()
     {
     }
 
@@ -178,18 +179,45 @@ namespace energonsoftware
         _connected = false;
     }
 
-    void WiFi::connect_server(const String& host, uint16_t port)
+    bool WiFi::connect_server(const String& host, uint16_t port)
     {
-        _client.connect(host.c_str(), port);
+        return _client.connect(host.c_str(), port) > 0;
     }
 
-    void WiFi::connect_server(const IPAddress& address, uint16_t port)
+    bool WiFi::connect_server(const IPAddress& address, uint16_t port)
     {
-        _client.connect(address, port);
+        return _client.connect(address, port) > 0;
     }
 
     void WiFi::disconnect_server()
     {
         _client.stop();
+    }
+
+    bool WiFi::begin_udp(uint16_t local_port)
+    {
+        return _udp.begin(local_port) > 0;
+    }
+
+    bool WiFi::send_udp_packet(const String& host, uint16_t remote_port, const byte* const buffer, size_t buffer_len)
+    {
+        if(_udp.beginPacket(host.c_str(), remote_port) < 1) {
+            return false;
+        }
+
+        if(_udp.write(buffer, buffer_len) < 1) {
+            return false;
+        }
+
+        if(_udp.endPacket() < 1) {
+            return false;
+        }
+
+        return true;
+    }
+
+    void WiFi::end_udp()
+    {
+        _udp.stop();
     }
 }
