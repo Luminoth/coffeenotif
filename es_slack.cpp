@@ -16,31 +16,4 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <Arduino.h>
-#include "es_core.h"
-
-namespace energonsoftware
-{
-    void safe_exit(int led_pin)
-    {
-        if(led_pin > 0) {
-            analogWrite(led_pin, 255);
-        }
-
-        // TODO: can we call exit() instead of hard-locking the controller?
-        while(true);
-    }
-
-    void init_serial(unsigned long baud_rate)
-    {
-        Serial.begin(baud_rate);
-
-        // wait for serial port to connect
-        // (needed for native USB port only?)
-        while(true) {
-            if(Serial) {
-                break;
-            }
-        }
-    }
-}
+#include "es_slack.h"

@@ -71,7 +71,7 @@ namespace energonsoftware
     public:
         bool init();
 
-        void connect(int connecting_led_pin=-1, int connected_led_pin=-1);
+        void connect(int error_led_pin=-1);
         void disconnect();
 
     public:

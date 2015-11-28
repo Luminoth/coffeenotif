@@ -72,6 +72,8 @@ extern "C" void __cxa_pure_virtual() {;}
 #include <..\coffeenotif\es_network.h>
 #include <..\coffeenotif\es_ntp.cpp>
 #include <..\coffeenotif\es_ntp.h>
+#include <..\coffeenotif\es_slack.cpp>
+#include <..\coffeenotif\es_slack.h>
 #include <..\coffeenotif\es_wifi.cpp>
 #include <..\coffeenotif\es_wifi.h>
 #endif

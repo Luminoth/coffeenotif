@@ -124,7 +124,7 @@ namespace energonsoftware
         return true;
     }
 
-    void WiFi::connect(int connecting_led_pin, int connected_led_pin)
+    void WiFi::connect(int error_led_pin)
     {
         uint8_t status = ::WiFi.status();
         if(WL_CONNECTED == status) {
@@ -137,10 +137,6 @@ namespace energonsoftware
         }
 
         while(WL_CONNECTED != status) {
-            if(connecting_led_pin > 0) {
-                // TODO: set connecting LED
-            }
-
             Serial.println("Attempting to connect to SSID: " + _ssid);
 
             switch(_encryption_type)
@@ -158,7 +154,7 @@ namespace energonsoftware
             default:
                 Serial.print("Unsupported encryption type: ");
                 Serial.println(_encryption_type);
-                safe_exit();
+                safe_exit(error_led_pin);
                 break;
             }
 
@@ -171,10 +167,6 @@ namespace energonsoftware
 
         Serial.println("Connection successful!");
         _connected = true;
-
-        if(connected_led_pin > 0) {
-            // TODO: set connected LED
-        }
 
         print_connection_info();
     }
@@ -248,7 +240,7 @@ namespace energonsoftware
         Serial.print(remote_port);
         Serial.print(" (");
         Serial.print(buffer_len);
-        Serial.println((")");
+        Serial.println(")");
 
         if(_udp.beginPacket(address, remote_port) < 1) {
             Serial.println("Failed to connect to UDP address!");

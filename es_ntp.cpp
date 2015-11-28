@@ -74,11 +74,11 @@ namespace energonsoftware
 
         // combine the four bytes (two words) into a long integer
         // this is NTP time (seconds since Jan 1 1900):
-        const unsigned long secsSince1900 = high_word << 16 | low_word;
+        const unsigned long ntp_time = high_word << 16 | low_word;
 
-        // now convert NTP time into everyday time
-        // subtract seventy years:
-        return secsSince1900 - SeventyYears;
+        // now convert NTP time into everyday time.
+        // Subtract seventy years:
+        return ntp_time - SeventyYearsSeconds;
     }
 
     bool Ntp::set_rtc(RTCZero& rtc, INetwork& network, uint16_t local_port, const String& host)

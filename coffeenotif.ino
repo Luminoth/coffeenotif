@@ -27,6 +27,7 @@
 #include <WiFi101.h>
 #include "es_core.h"
 #include "es_ntp.h"
+#include "es_slack.h"
 #include "es_wifi.h"
 
 //// WIFI SETTINGS (WPA2 Enterprise not supported)
@@ -45,15 +46,24 @@ const uint16_t LOCAL_NTP_PORT = 2123;
 const String NTP_HOST("pool.ntp.org");
 //// END NTP SETTINGS
 
+//// PIN SETTINGS
+
+// NOTE: all Zero pins are PWM except 2 and 7
+// NOTE: WiFi101 shield uses digital pins 5, 6 (the onboard button), 7 and should not be used
+// the docs say pins 11, 12, and 13 are used for SPI but they're safe to re-use, I guess?
+// and pin 10 is slave select
+
+const uint32_t ERROR_LED_PIN = 3;
+const uint32_t INPUT_BUTTON_PIN = 9;
+//// END PIN SETTINGS
+
 energonsoftware::WiFi g_wifi;
 
 RTCZero rtc;
 const int NTP_UPDATE_RATE_MS = 1 * 60 * 60 * 1000;  // 1 hour updates
 unsigned long g_last_ntp_update_ms = 0;
 
-// NOTE: WiFi101 shield uses digital pins 5, 6, 7 and should not be used
-// the docs say pins 11, 12, and 13 are used for SPI but they're safe to re-use, I guess?
-// and pin 10 is slave select
+int g_last_button_state = LOW;
 
 void update_rtc()
 {
@@ -67,20 +77,31 @@ void update_rtc()
     g_last_ntp_update_ms = current_ms;
 }
 
-bool poll_button()
+bool poll_button_released()
 {
-    // TODO
-    return false;
+    bool button_released = false;
+
+    int current_button_state = digitalRead(INPUT_BUTTON_PIN);
+    if(LOW == current_button_state && HIGH == g_last_button_state) {
+        button_released = true;
+    }
+
+    g_last_button_state = current_button_state;
+    return button_released;
 }
 
 void notify_slack_channel()
 {
-    // TODO
+    Serial.println("TODO: notify slack channel!");
 }
 
 void setup()
 {
     energonsoftware::init_serial(115200);
+
+    Serial.println("Initializing I/O...");
+    pinMode(ERROR_LED_PIN, OUTPUT);
+    pinMode(INPUT_BUTTON_PIN, INPUT);
 
     g_wifi.set_encryption_type(ENCRYPTION_TYPE);
     g_wifi.set_ssid(WIFI_SSID);
@@ -91,7 +112,7 @@ void setup()
     g_wifi.set_ip_address(IP_ADDRESS);
 
     if(!g_wifi.init()) {
-        energonsoftware::safe_exit();
+        energonsoftware::safe_exit(ERROR_LED_PIN);
         return;
     }
 
@@ -100,11 +121,11 @@ void setup()
 
 void loop()
 {
-    g_wifi.connect();
+    g_wifi.connect(ERROR_LED_PIN);
 
     update_rtc();
 
-    if(poll_button()) {
+    if(poll_button_released()) {
         notify_slack_channel();
     }
 }
