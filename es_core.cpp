@@ -21,9 +21,9 @@
 
 namespace energonsoftware
 {
-    void safe_exit(int ledPin)
+    void safe_exit(int led_pin)
     {
-        if(ledPin > 0) {
+        if(led_pin > 0) {
             // TODO: set a failure LED
         }
 
@@ -31,9 +31,9 @@ namespace energonsoftware
         while(true);
     }
 
-    void init_serial(unsigned long baudRate)
+    void init_serial(unsigned long baud_rate)
     {
-        Serial.begin(baudRate);
+        Serial.begin(baud_rate);
 
         // wait for serial port to connect
         // (needed for native USB port only?)

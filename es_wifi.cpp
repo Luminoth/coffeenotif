@@ -21,8 +21,8 @@
 #include "es_core.h"
 #include "es_wifi.h"
 
+// https://www.arduino.cc/en/Reference/WiFi101
 // https://www.arduino.cc/en/Guide/ArduinoWiFiShield101
-// https://www.arduino.cc/en/Tutorial/Wifi101ConnectWithWPA
 
 namespace energonsoftware
 {
@@ -59,9 +59,18 @@ namespace energonsoftware
 
     void WiFi::print_ip_address()
     {
-        IPAddress ipAddres = ::WiFi.localIP();
+        const IPAddress local_ip(::WiFi.localIP());
+        const IPAddress subnet(::WiFi.subnetMask());
+
         Serial.print("IP Address: ");
-        Serial.println(ipAddres);
+        Serial.print(local_ip);
+        Serial.print(" / ");
+        Serial.println(subnet);
+
+        const IPAddress gateway(::WiFi.gatewayIP());
+
+        Serial.print("Gateway: ");
+        Serial.println(gateway);
     }
 
     void WiFi::print_signal_strength()
@@ -78,7 +87,7 @@ namespace energonsoftware
     }
 
     WiFi::WiFi()
-        : _use_dhcp(true),
+        : _use_dhcp(true), _ip_address(), _dns_server(), _gateway(), _subnet(),
             _ssid(), _encryption_type(ENC_TYPE_NONE),
             _wep_key(), _wep_key_index(0),
             _wpa_password(),
@@ -97,7 +106,9 @@ namespace energonsoftware
         Serial.println("Initializing WiFi...");
 
         if(!_use_dhcp) {
-            // TODO: use WiFi.config() to set the non-DHCP settings
+// TODO: sort this out to enable these other options
+            //::WiFi.config(_ip_address, _dns_server, _gateway, _subnet);
+            ::WiFi.config(_ip_address);
         } else {
             Serial.println("Using DHCP...");
         }
@@ -105,7 +116,7 @@ namespace energonsoftware
         return true;
     }
 
-    void WiFi::connect(int connectingLedPin, int connectedLedPin)
+    void WiFi::connect(int connecting_led_pin, int connected_led_pin)
     {
         int status = ::WiFi.status();
         if(WL_CONNECTED == status) {
@@ -118,7 +129,7 @@ namespace energonsoftware
         }
 
         while(WL_CONNECTED != status) {
-            if(connectingLedPin > 0) {
+            if(connecting_led_pin > 0) {
                 // TODO: set connecting LED
             }
 
@@ -154,11 +165,16 @@ namespace energonsoftware
         Serial.println("Connection successful!");
         _connected = true;
 
-        if(connectedLedPin > 0) {
+        if(connected_led_pin > 0) {
             // TODO: set connected LED
         }
 
-        // TODO: move this to the caller
         print_connection_info();
+    }
+
+    void WiFi::disconnect()
+    {
+        ::WiFi.disconnect();
+        _connected = false;
     }
 }

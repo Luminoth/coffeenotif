@@ -21,9 +21,9 @@
 
 namespace energonsoftware
 {
-    void safe_exit(int ledPin=-1);
+    void safe_exit(int led_pin=-1);
 
-    void init_serial(unsigned long baudRate=9600);
+    void init_serial(unsigned long baud_rate);
 }
 
 #endif

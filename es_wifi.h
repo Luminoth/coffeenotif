@@ -40,7 +40,17 @@ namespace energonsoftware
         void set_use_dhcp(bool use_dhcp) { _use_dhcp = use_dhcp; }
         bool get_use_dhcp() const { return _use_dhcp; }
 
-// TODO: non-dhcp values
+        void set_ip_address(const IPAddress& ip_address) { _ip_address = ip_address; }
+        const IPAddress& get_ip_address() const { return _ip_address; }
+
+        void set_dns_server(const IPAddress& dns_server) { _dns_server = dns_server; }
+        const IPAddress& get_dns_server() const { return _dns_server; }
+
+        void set_gateway(const IPAddress& gateway) { _gateway = gateway; }
+        const IPAddress& get_gateway() const { return _gateway; }
+
+        void set_subnet(const IPAddress& subnet) { _subnet = subnet; }
+        const IPAddress& get_subnet() const { return _subnet; }
 
         void set_ssid(const String& ssid) { _ssid = ssid; }
         const String& get_ssid() const { return _ssid; }
@@ -55,12 +65,13 @@ namespace energonsoftware
 
     public:
         bool init();
-        void connect(int connectingLedPin=-1, int connectedLedPin=-1);
+
+        void connect(int connecting_led_pin=-1, int connected_led_pin=-1);
+        void disconnect();
 
     private:
         bool _use_dhcp;
-
-// TODO: add non-dhcp settings
+        IPAddress _ip_address, _dns_server, _gateway, _subnet;
 
         String _ssid;
 
