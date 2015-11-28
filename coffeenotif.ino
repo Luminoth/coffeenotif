@@ -30,7 +30,7 @@
 #include "es_wifi.h"
 
 //// WIFI SETTINGS (WPA2 Enterprise not supported)
-const wl_enc_type ENCRYPTION_TYPE = ENC_TYPE_CCMP;
+const wl_enc_type ENCRYPTION_TYPE = ENC_TYPE_NONE;
 const char WIFI_SSID[] = "<YOUR-SSID>";
 const char WIFI_KEY[] = "<YOUR-WEP-KEY>";
 const int WIFI_KEY_INDEX = 0;
