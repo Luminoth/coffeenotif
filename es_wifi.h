@@ -19,9 +19,12 @@
 #if !defined __ES_WIFI_H__
 #define __ES_WIFI_H__
 
+#include <WiFi101.h>
+#include "es_network.h"
+
 namespace energonsoftware
 {
-    class WiFi
+    class WiFi : public INetwork
     {
     public:
         static void print_firmware_version();
@@ -69,6 +72,12 @@ namespace energonsoftware
         void connect(int connecting_led_pin=-1, int connected_led_pin=-1);
         void disconnect();
 
+    public:
+        virtual void connect_server(const String& host, uint16_t port) override;
+        void connect_server(const IPAddress& address, uint16_t port);
+
+        virtual void disconnect_server() override;
+
     private:
         bool _use_dhcp;
         IPAddress _ip_address, _dns_server, _gateway, _subnet;
@@ -82,6 +91,8 @@ namespace energonsoftware
 
         bool _connected;
         unsigned int _reconnect_delay_ms;
+
+        WiFiClient _client;
     };
 }
 

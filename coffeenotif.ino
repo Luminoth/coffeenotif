@@ -22,9 +22,11 @@
 // **** https://www.arduino.cc/en/Tutorial.Wifi101GoogleCalendar (great example!)
 // https://www.arduino.cc/en/Tutorial/WiFiWebClient
 
+#include <RTCZero.h>
 #include <SPI.h>
 #include <WiFi101.h>
 #include "es_core.h"
+#include "es_ntp.h"
 #include "es_wifi.h"
 
 //// WIFI SETTINGS (WPA2 Enterprise not supported)
@@ -40,9 +42,24 @@ const IPAddress IP_ADDRESS(127, 0, 0, 1);
 
 energonsoftware::WiFi g_wifi;
 
+energonsoftware::Ntp g_ntp;
+const int NTP_UPDATE_RATE_MS = 1 * 60 * 60 * 1000;  // 1 hour updates
+unsigned long g_last_ntp_update_ms = 0;
+
 // NOTE: WiFi101 shield uses digital pins 5, 6, 7 and should not be used
 // the docs say pins 11, 12, and 13 are used for SPI but they're safe to re-use, I guess?
 // and pin 10 is slave select
+
+void update_rtc()
+{
+    unsigned long current_ms = millis();
+    if(g_last_ntp_update_ms + NTP_UPDATE_RATE_MS >= current_ms) {
+        return;
+    }
+
+    g_ntp.set_rtc(g_wifi);
+    g_last_ntp_update_ms = current_ms;
+}
 
 bool poll_button()
 {
@@ -78,6 +95,8 @@ void setup()
 void loop()
 {
     g_wifi.connect();
+
+    update_rtc();
 
     if(poll_button()) {
         notify_slack_channel();

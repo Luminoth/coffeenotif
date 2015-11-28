@@ -17,7 +17,6 @@
 */
 
 #include <Arduino.h>
-#include <WiFi101.h>
 #include "es_core.h"
 #include "es_wifi.h"
 
@@ -91,7 +90,8 @@ namespace energonsoftware
             _ssid(), _encryption_type(ENC_TYPE_NONE),
             _wep_key(), _wep_key_index(0),
             _wpa_password(),
-            _connected(false), _reconnect_delay_ms(10 * 1000)
+            _connected(false), _reconnect_delay_ms(10 * 1000),
+            _client()
     {
     }
 
@@ -176,5 +176,20 @@ namespace energonsoftware
     {
         ::WiFi.disconnect();
         _connected = false;
+    }
+
+    void WiFi::connect_server(const String& host, uint16_t port)
+    {
+        _client.connect(host.c_str(), port);
+    }
+
+    void WiFi::connect_server(const IPAddress& address, uint16_t port)
+    {
+        _client.connect(address, port);
+    }
+
+    void WiFi::disconnect_server()
+    {
+        _client.stop();
     }
 }
