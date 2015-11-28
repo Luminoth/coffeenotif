@@ -41,6 +41,10 @@ const bool USE_DHCP = true;
 const IPAddress IP_ADDRESS(127, 0, 0, 1);
 //// END WIFI SETTINGS
 
+//// SLACK SETTINGS
+const String SLACK_API_TOKEN = "<YOUR-SLACK-API-TOKEN>";
+//// END SLACK SETTINGS
+
 //// NTP SETTINGS
 const uint16_t LOCAL_NTP_PORT = 2123;
 const String NTP_HOST("pool.ntp.org");
@@ -58,6 +62,7 @@ const uint32_t INPUT_BUTTON_PIN = 9;
 //// END PIN SETTINGS
 
 energonsoftware::WiFi g_wifi;
+energonsoftware::Slack g_slack;
 
 RTCZero rtc;
 const int NTP_UPDATE_RATE_MS = 1 * 60 * 60 * 1000;  // 1 hour updates
@@ -117,6 +122,9 @@ void setup()
     }
 
     g_wifi.print_shield_info();
+
+    Serial.println("Initializing Slack...");
+    g_slack.set_api_token(SLACK_API_TOKEN);
 }
 
 void loop()

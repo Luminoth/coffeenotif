@@ -23,6 +23,16 @@ namespace energonsoftware
 {
     class Slack
     {
+    public:
+        Slack();
+        virtual ~Slack() throw() { }
+
+    public:
+        void set_api_token(const String& api_token) { _api_token = api_token; }
+        const String& get_api_token() const { return _api_token; }
+
+    private:
+        String _api_token;
     };
 }
 

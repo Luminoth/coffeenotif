@@ -17,3 +17,11 @@
 */
 
 #include "es_slack.h"
+
+namespace energonsoftware
+{
+    Slack::Slack()
+        : _api_token()
+    {
+    }
+}
