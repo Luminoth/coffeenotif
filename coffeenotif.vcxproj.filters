@@ -42,6 +42,12 @@
     <ClInclude Include="es_ntp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="es_network.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="es_slack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="es_wifi.cpp">
@@ -51,6 +57,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="es_ntp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="es_slack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

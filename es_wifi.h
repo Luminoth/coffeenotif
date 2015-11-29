@@ -25,6 +25,9 @@
 
 namespace energonsoftware
 {
+    // TODO: the coupling here is all fucked up
+    // need to wrap the WiFiClient/UDP classes
+    // as well as the WiFi interface
     class WiFi : public INetwork
     {
     public:
@@ -78,7 +81,15 @@ namespace energonsoftware
         virtual bool connect_server(const String& host, uint16_t port) override;
         bool connect_server(const IPAddress& address, uint16_t port);
 
+        virtual bool connect_server_ssl(const String& host, uint16_t port) override;
+
         virtual void disconnect_server() override;
+
+        virtual void println(const String& message="") override;
+
+        virtual int available() override;
+
+        virtual String read_string() override;
 
     public:
         virtual bool begin_udp(uint16_t local_port) override;

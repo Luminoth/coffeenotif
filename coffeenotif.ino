@@ -43,6 +43,8 @@ const IPAddress IP_ADDRESS(127, 0, 0, 1);
 
 //// SLACK SETTINGS
 const String SLACK_API_TOKEN = "<YOUR-SLACK-API-TOKEN>";
+const String SLACK_USERNAME = "<YOUR-SLACK-BOT-USERNAME>";
+const String SLACK_CHANNEL = "#general";
 //// END SLACK SETTINGS
 
 //// NTP SETTINGS
@@ -57,7 +59,9 @@ const String NTP_HOST("pool.ntp.org");
 // the docs say pins 11, 12, and 13 are used for SPI but they're safe to re-use, I guess?
 // and pin 10 is slave select
 
-const uint32_t ERROR_LED_PIN = 3;
+const uint32_t ERROR_LED_PIN = 3;       // red
+const uint32_t SLACK_LED_PIN = 4;       // blue
+
 const uint32_t INPUT_BUTTON_PIN = 9;
 //// END PIN SETTINGS
 
@@ -97,7 +101,13 @@ bool poll_button_released()
 
 void notify_slack_channel()
 {
-    Serial.println("TODO: notify slack channel!");
+    analogWrite(SLACK_LED_PIN, 255);
+
+    g_slack.connect(g_wifi);
+    g_slack.send_message(g_wifi, SLACK_CHANNEL, "test");
+    g_slack.disconnect(g_wifi);
+
+    analogWrite(SLACK_LED_PIN, 0);
 }
 
 void setup()
@@ -106,6 +116,7 @@ void setup()
 
     Serial.println("Initializing I/O...");
     pinMode(ERROR_LED_PIN, OUTPUT);
+    pinMode(SLACK_LED_PIN, OUTPUT);
     pinMode(INPUT_BUTTON_PIN, INPUT);
 
     g_wifi.set_encryption_type(ENCRYPTION_TYPE);
@@ -125,6 +136,7 @@ void setup()
 
     Serial.println("Initializing Slack...");
     g_slack.set_api_token(SLACK_API_TOKEN);
+    g_slack.set_username(SLACK_USERNAME);
 }
 
 void loop()

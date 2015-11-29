@@ -194,10 +194,31 @@ namespace energonsoftware
         return _client.connect(address, port) > 0;
     }
 
+    bool WiFi::connect_server_ssl(const String& host, uint16_t port)
+    {
+        Serial.println("Connecting to host using SSL: " + host + ":" + port + "...");
+        return _client.connectSSL(host.c_str(), port) > 0;
+    }
+
     void WiFi::disconnect_server()
     {
         Serial.println("Disconnecting from server...");
         _client.stop();
+    }
+
+    void WiFi::println(const String& message)
+    {
+        _client.println(message);
+    }
+
+    int WiFi::available()
+    {
+        return _client.available();
+    }
+
+    String WiFi::read_string()
+    {
+        return _client.readString();
     }
 
     bool WiFi::begin_udp(uint16_t local_port)

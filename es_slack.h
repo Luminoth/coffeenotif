@@ -16,13 +16,19 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef _ES_SLACK_H__
-#define _ES_SLACK_H__
+#if !defined __ES_SLACK_H__
+#define __ES_SLACK_H__
 
 namespace energonsoftware
 {
     class Slack
     {
+    private:
+        static const uint32_t TimeoutMs = 60 * 1000;
+
+    private:
+        static String build_message(const String& api_token, const String& channel, const String& username, const String& message);
+
     public:
         Slack();
         virtual ~Slack() throw() { }
@@ -31,8 +37,18 @@ namespace energonsoftware
         void set_api_token(const String& api_token) { _api_token = api_token; }
         const String& get_api_token() const { return _api_token; }
 
+        void set_username(const String& username) { _username = username; }
+        const String& get_username() const { return _username; }
+
+    public:
+        bool connect(INetwork& network);
+        void disconnect(INetwork& network);
+
+        void send_message(INetwork& network, const String& channel, const String& message);
+
     private:
         String _api_token;
+        String _username;
     };
 }
 

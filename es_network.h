@@ -29,7 +29,15 @@ namespace energonsoftware
 
     public:
         virtual bool connect_server(const String& host, uint16_t port) = 0;
+        virtual bool connect_server_ssl(const String& host, uint16_t port) = 0;
+
         virtual void disconnect_server() = 0;
+
+        virtual void println(const String& message="") = 0;
+
+        virtual int available() = 0;
+
+        virtual String read_string() = 0;
 
     public:
         virtual bool begin_udp(uint16_t local_port) = 0;
