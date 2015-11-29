@@ -18,6 +18,7 @@
 
 #include <ctime>
 #include <Arduino.h>
+#include "es_core.h"
 #include "es_ntp.h"
 
 // https://www.arduino.cc/en/Tutorial/SimpleRTC
@@ -36,33 +37,21 @@ namespace energonsoftware
         buffer[14]  = 49;
         buffer[15]  = 52;
 
-        if(!udp.network().send_udp_packet(host, NtpPort, buffer, NtpPacketSize)) {
-            return false;
-        }
-
-        return true;
+        return udp.send_packet(host, NtpPort, buffer, NtpPacketSize);
     }
 
-    bool Ntp::recv_packet(UdpWrapper& udp, byte* const buffer)
+    bool Ntp::recv_packet(UDP& udp, byte* const buffer)
     {
-        uint32_t start_ms = millis();
-        while(udp.network().udp_available() < 1) {
-            uint32_t current_ms = millis();
-            if(current_ms >= start_ms + TimeoutMs) {
-                break;
-            }
-        }
-
-        if(!udp.network().parse_udp_packet()) {
-            Serial.println("NTP timeout!");
+        if(!energonsoftware::poll_timeout(udp, TimeoutMs)) {
             return false;
         }
 
-        if(!udp.network().read_udp_packet(buffer, NtpPacketSize)) {
+        if(udp.parsePacket() < 1) {
+            Serial.println("UDP parse error!");
             return false;
         }
 
-        return true;
+        return udp.readBytes(buffer, NtpPacketSize) > 0;
     }
 
     unsigned long Ntp::parse_epoch(const byte* const buffer)
@@ -81,12 +70,12 @@ namespace energonsoftware
         return ntp_time - SeventyYearsSeconds;
     }
 
-    bool Ntp::set_rtc(RTCZero& rtc, INetwork& network, uint16_t local_port, const String& host)
+    bool Ntp::set_rtc(RTCZero& rtc, UDP& udp, uint16_t local_port, const String& host)
     {
         Serial.println("Setting RTC from NTP server " + host + "...");
 
-        UdpWrapper udp(network, local_port);
-        if(!udp.is_valid()) {
+        UdpWrapper udp_wrapped(udp, local_port);
+        if(!udp_wrapped.is_valid()) {
             Serial.println("UDP listen error!");
             return false;
         }
@@ -94,7 +83,7 @@ namespace energonsoftware
         static byte buffer[NtpPacketSize];
         memset(buffer, 0, NtpPacketSize);
 
-        if(!send_packet(udp, host, buffer)) {
+        if(!send_packet(udp_wrapped, host, buffer)) {
             Serial.println("Error sending NTP packet!");
             return false;
         }

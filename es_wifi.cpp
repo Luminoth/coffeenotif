@@ -17,6 +17,7 @@
 */
 
 #include <Arduino.h>
+#include <WiFi101.h>
 #include "es_core.h"
 #include "es_wifi.h"
 
@@ -93,13 +94,11 @@ namespace energonsoftware
     }
 
     WiFi::WiFi()
-        : INetwork(),
-            _use_dhcp(true), _ip_address(), _dns_server(), _gateway(), _subnet(),
+        : _use_dhcp(true), _ip_address(), _dns_server(), _gateway(), _subnet(),
             _ssid(), _encryption_type(ENC_TYPE_NONE),
             _wep_key(), _wep_key_index(0),
             _wpa_password(),
-            _connected(false), _reconnect_delay_ms(10 * 1000),
-            _client(), _udp()
+            _connected(false), _reconnect_delay_ms(10 * 1000)
     {
     }
 
@@ -124,11 +123,11 @@ namespace energonsoftware
         return true;
     }
 
-    void WiFi::connect(int error_led_pin)
+    bool WiFi::connect(int error_led_pin)
     {
         uint8_t status = ::WiFi.status();
         if(WL_CONNECTED == status) {
-            return;
+            return false;
         }
 
         if(_connected) {
@@ -167,8 +166,9 @@ namespace energonsoftware
 
         Serial.println("Connection successful!");
         _connected = true;
-
         print_connection_info();
+
+        return true;
     }
 
     void WiFi::disconnect()
@@ -176,120 +176,5 @@ namespace energonsoftware
         Serial.println("Disconnecting WiFi...");
         ::WiFi.disconnect();
         _connected = false;
-    }
-
-    bool WiFi::connect_server(const String& host, uint16_t port)
-    {
-        Serial.println("Connecting to host: " + host + ":" + port + "...");
-        return _client.connect(host.c_str(), port) > 0;
-    }
-
-    bool WiFi::connect_server(const IPAddress& address, uint16_t port)
-    {
-        Serial.print("Connecting to address: ");
-        Serial.print(address);
-        Serial.print(":");
-        Serial.print(port);
-        Serial.println("...");
-        return _client.connect(address, port) > 0;
-    }
-
-    bool WiFi::connect_server_ssl(const String& host, uint16_t port)
-    {
-        Serial.println("Connecting to host using SSL: " + host + ":" + port + "...");
-        return _client.connectSSL(host.c_str(), port) > 0;
-    }
-
-    void WiFi::disconnect_server()
-    {
-        Serial.println("Disconnecting from server...");
-        _client.stop();
-    }
-
-    void WiFi::println(const String& message)
-    {
-        _client.println(message);
-    }
-
-    int WiFi::available()
-    {
-        return _client.available();
-    }
-
-    String WiFi::read_string()
-    {
-        return _client.readString();
-    }
-
-    bool WiFi::begin_udp(uint16_t local_port)
-    {
-        Serial.print("UDP listen: ");
-        Serial.println(local_port);
-        return _udp.begin(local_port) > 0;
-    }
-
-    void WiFi::end_udp()
-    {
-        Serial.println("Stopping UDP...");
-        _udp.stop();
-    }
-
-    bool WiFi::send_udp_packet(const String& host, uint16_t remote_port, const byte* const buffer, size_t buffer_len)
-    {
-        Serial.println("Sending UDP packet to " + host + ":" + remote_port + " (" + buffer_len + ")");
-
-        if(_udp.beginPacket(host.c_str(), remote_port) < 1) {
-            Serial.println("Failed to connect to UDP host!");
-            return false;
-        }
-
-        _udp.write(buffer, buffer_len);
-
-        if(_udp.endPacket() < 1) {
-            Serial.println("Failed to send UDP packet!");
-            return false;
-        }
-
-        return true;
-    }
-
-    bool WiFi::send_udp_packet(const IPAddress& address, uint16_t remote_port, const byte* const buffer, size_t buffer_len)
-    {
-        Serial.print("Sending UDP packet to ");
-        Serial.print(address);
-        Serial.print(":");
-        Serial.print(remote_port);
-        Serial.print(" (");
-        Serial.print(buffer_len);
-        Serial.println(")");
-
-        if(_udp.beginPacket(address, remote_port) < 1) {
-            Serial.println("Failed to connect to UDP address!");
-            return false;
-        }
-
-        _udp.write(buffer, buffer_len);
-
-        if(_udp.endPacket() < 1) {
-            Serial.println("Failed to send UDP packet!");
-            return false;
-        }
-
-        return true;
-    }
-
-    int WiFi::udp_available()
-    {
-        return _udp.available();
-    }
-
-    bool WiFi::parse_udp_packet()
-    {
-        return _udp.parsePacket() > 0;
-    }
-
-    bool WiFi::read_udp_packet(byte* const buffer, size_t buffer_len)
-    {
-        return _udp.read(buffer, buffer_len) > 0;
     }
 }

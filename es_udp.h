@@ -16,20 +16,35 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#if !defined __ES_CORE_H__
-#define __ES_CORE_H__
+#if !defined __ES_UDP_H__
+#define __ES_UDP_H__
 
-#include <Stream.h>
+#include <UDP.h>
 
 namespace energonsoftware
 {
-    void safe_exit(int led_pin=-1);
+    class UdpWrapper
+    {
+    public:
+        UdpWrapper(UDP& udp, uint16_t local_port);
+        virtual ~UdpWrapper() throw();
 
-    void init_serial(unsigned long baud_rate);
+    public:
+        bool is_valid() const { return _valid; }
 
-    bool poll_timeout(Stream& stream, uint32_t timeout_ms);
+        UDP& udp() const { return _udp; }
 
-    String uri_encode(const String& uri);
+    public:
+        bool send_packet(const String& host, uint16_t remote_port, const byte* const buffer, size_t buffer_len);
+
+    private:
+        UDP& _udp;
+        bool _valid;
+
+    private:
+        UdpWrapper() = delete;
+        UdpWrapper(const UdpWrapper&) = delete;
+    };
 }
 
 #endif

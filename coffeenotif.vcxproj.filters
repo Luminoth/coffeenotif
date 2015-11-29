@@ -42,10 +42,10 @@
     <ClInclude Include="es_ntp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="es_network.h">
+    <ClInclude Include="es_slack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="es_slack.h">
+    <ClInclude Include="es_udp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -60,6 +60,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="es_slack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="es_udp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

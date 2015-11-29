@@ -17,17 +17,51 @@
 */
 
 #include <Arduino.h>
-#include "es_network.h"
+#include "es_core.h"
 #include "es_slack.h"
 
 namespace energonsoftware
 {
-// http://forum.arduino.cc/index.php/topic,99538.0.html
+// https://api.slack.com/
+// https://api.slack.com/getting-started
+// https://api.slack.com/bot-users
+// https://api.slack.com/rtm
 
-    String Slack::build_post_message(const String& api_token, const String& channel, const String& username, const String& message)
+    const String Slack::SlackApiHost = String("slack.com");
+
+    String Slack::build_start_rtm_uri(const String& api_token)
     {
-// https://slack.com/api/chat.postMessage?channel=%23general&text=test&username=derp_bot&pretty=1 
-        return String("/api/chat.postMessage?channel=" + channel + "&text=" + message + "&username=" + username);
+        return String("/api/rtm.start")
+            + "?token=" + energonsoftware::uri_encode(api_token);
+    }
+
+    String Slack::build_post_message_uri(const String& api_token, const String& channel, const String& username, const String& message)
+    {
+        return String("/api/chat.postMessage")
+            + "?token=" + energonsoftware::uri_encode(api_token)
+            + "&channel=" + energonsoftware::uri_encode(channel)
+            + "&text=" + energonsoftware::uri_encode(message)
+            + "&username=" + energonsoftware::uri_encode(username)
+            + "&parse=full";
+    }
+
+    void Slack::send_packet(Client& client, const String& uri)
+    {
+        Serial.println("Sending message to Slack API: " + uri);
+        client.println("GET " + uri + " HTTP/1.1");
+        client.println("Host: " + SlackApiHost);
+        client.println("User-Agent: ArduinoWiFi/1.1");
+        client.println("Connection: close");
+        client.println();
+    }
+
+    void Slack::recv_response(Client& client)
+    {
+        if(!energonsoftware::poll_timeout(client, TimeoutMs)) {
+            return;
+        }
+
+        Serial.println("Slack API response: " + client.readString());
     }
 
     Slack::Slack()
@@ -35,48 +69,27 @@ namespace energonsoftware
     {
     }
 
-    bool Slack::connect(INetwork& network)
+    bool Slack::connect(Client& client)
     {
-        Serial.println("Connecting to Slack API...");
-        return network.connect_server_ssl("slack.com", 80);
+        Serial.println("Connecting to Slack API (" + SlackApiHost + ":" + SlackApiPort + ")...");
+        return client.connect(SlackApiHost.c_str(), SlackApiPort) > 0;
     }
 
-    void Slack::disconnect(INetwork& network)
+    void Slack::disconnect(Client& client)
     {
         Serial.println("Disconnecting from Slack API...");
-        network.disconnect_server();
+        client.stop();
     }
 
-    void Slack::send_message(INetwork& network, const String& channel, const String& message)
+    void Slack::start(Client& client)
     {
-        String post_message = build_post_message(_api_token, channel, _username, message);
-        Serial.println("Sending message to Slack API: " + post_message);
+        send_packet(client, build_start_rtm_uri(_api_token));
+        recv_response(client);
+    }
 
-        network.println("GET " + post_message + " HTTP/1.1");
-        network.println("Host: slack.com");
-        network.println("User-Agent: ArduinoWiFi/1.1");
-        network.println("Connection: close");
-        network.println();
-
-// http://blog.devpost.com/post/93328687487/hacking-the-office-arduinos-extensions-and
-// https://api.slack.com/
-// https://api.slack.com/getting-started
-// https://api.slack.com/bot-users
-// https://api.slack.com/incoming-webhooks
-// https://api.slack.com/rtm
-
-// wat?
-
-        Serial.println("Waiting for response...");
-        uint32_t start_ms = millis();
-        while(network.available() < 1) {
-            uint32_t current_ms = millis();
-            if(current_ms >= start_ms + TimeoutMs) {
-                Serial.println("Slack API response timeout!");
-                return;
-            }
-        }
-
-        network.println("Slack API response: " + network.read_string());
+    void Slack::send_message(Client& client, const String& channel, const String& message)
+    {
+        send_packet(client, build_post_message_uri(_api_token, channel, _username, message));
+        recv_response(client);
     }
 }

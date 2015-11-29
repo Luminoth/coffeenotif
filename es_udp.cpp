@@ -16,35 +16,38 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#if !defined __ES_NTP_H__
-#define __ES_NTP_H__
-
-#include <RTCZero.h>
+#include <Arduino.h>
 #include "es_udp.h"
 
 namespace energonsoftware
 {
-    class Ntp
+    UdpWrapper::UdpWrapper(UDP& udp, uint16_t local_port)
+        : _udp(udp), _valid(false)
     {
-    private:
-        static const int NtpPacketSize = 48;
-        static const uint16_t NtpPort = 123;
-        static const uint32_t TimeoutMs = 60 * 1000;
-        static const unsigned long SeventyYearsSeconds = 2208988800UL;
+        _valid = _udp.begin(local_port);
+    }
 
-    private:
-        static bool send_packet(UdpWrapper& udp, const String& host, byte* const buffer);
-        static bool recv_packet(UDP& udp, byte* const buffer);
+    UdpWrapper::~UdpWrapper() throw()
+    {
+        _udp.stop();
+    }
 
-        static unsigned long parse_epoch(const byte* const buffer);
+    bool UdpWrapper::send_packet(const String& host, uint16_t remote_port, const byte* const buffer, size_t buffer_len)
+    {
+        Serial.println("Sending UDP packet to " + host + ":" + remote_port + " (" + buffer_len + ")");
 
-    public:
-        Ntp() { }
-        virtual ~Ntp() throw() { }
+        if(_udp.beginPacket(host.c_str(), remote_port) < 1) {
+            Serial.println("Failed to connect to UDP host!");
+            return false;
+        }
 
-    public:
-        bool set_rtc(RTCZero& rtc, UDP& udp, uint16_t local_port, const String& host);
-    };
+        _udp.write(buffer, buffer_len);
+
+        if(_udp.endPacket() < 1) {
+            Serial.println("Failed to send UDP packet!");
+            return false;
+        }
+
+        return true;
+    }
 }
-
-#endif

@@ -25,6 +25,7 @@
 #include <RTCZero.h>
 #include <SPI.h>
 #include <WiFi101.h>
+#include <WiFiUdp.h>
 #include "es_core.h"
 #include "es_ntp.h"
 #include "es_slack.h"
@@ -57,7 +58,7 @@ const String NTP_HOST("pool.ntp.org");
 // NOTE: all Zero pins are PWM except 2 and 7
 // NOTE: WiFi101 shield uses digital pins 5, 6 (the onboard button), 7 and should not be used
 // the docs say pins 11, 12, and 13 are used for SPI but they're safe to re-use, I guess?
-// and pin 10 is slave select
+// pin 10 is slave select (can this be re-used?)
 
 const uint32_t ERROR_LED_PIN = 3;       // red
 const uint32_t SLACK_LED_PIN = 4;       // blue
@@ -67,12 +68,16 @@ const uint32_t INPUT_BUTTON_PIN = 9;
 
 energonsoftware::WiFi g_wifi;
 energonsoftware::Slack g_slack;
+WiFiSSLClient g_slack_client;
+WiFiUDP g_ntp_client;
 
 RTCZero rtc;
 const int NTP_UPDATE_RATE_MS = 1 * 60 * 60 * 1000;  // 1 hour updates
 unsigned long g_last_ntp_update_ms = 0;
 
 int g_last_button_state = LOW;
+
+unsigned long g_last_coffee_start_ms = 0;
 
 void update_rtc()
 {
@@ -82,7 +87,7 @@ void update_rtc()
     }
 
     static energonsoftware::Ntp ntp;
-    ntp.set_rtc(rtc, g_wifi, LOCAL_NTP_PORT, NTP_HOST);
+    ntp.set_rtc(rtc, g_ntp_client, LOCAL_NTP_PORT, NTP_HOST);
     g_last_ntp_update_ms = current_ms;
 }
 
@@ -99,13 +104,26 @@ bool poll_button_released()
     return button_released;
 }
 
+void start_slack()
+{
+    Serial.println("Starting Slack RTM session...");
+
+    analogWrite(SLACK_LED_PIN, 255);
+
+    g_slack.connect(g_slack_client);
+    g_slack.start(g_slack_client);
+    g_slack.disconnect(g_slack_client);
+
+    analogWrite(SLACK_LED_PIN, 0);
+}
+
 void notify_slack_channel()
 {
     analogWrite(SLACK_LED_PIN, 255);
 
-    g_slack.connect(g_wifi);
-    g_slack.send_message(g_wifi, SLACK_CHANNEL, "test");
-    g_slack.disconnect(g_wifi);
+    g_slack.connect(g_slack_client);
+    g_slack.send_message(g_slack_client, SLACK_CHANNEL, "/giphy coffee brewing");
+    g_slack.disconnect(g_slack_client);
 
     analogWrite(SLACK_LED_PIN, 0);
 }
@@ -141,11 +159,14 @@ void setup()
 
 void loop()
 {
-    g_wifi.connect(ERROR_LED_PIN);
+    if(g_wifi.connect(ERROR_LED_PIN)) {
+        start_slack();
+    }
 
     update_rtc();
 
     if(poll_button_released()) {
+        g_last_coffee_start_ms = millis();
         notify_slack_channel();
     }
 }

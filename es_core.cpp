@@ -43,4 +43,66 @@ namespace energonsoftware
             }
         }
     }
+
+    bool poll_timeout(Stream& stream, uint32_t timeout_ms)
+    {
+        Serial.print("Polling stream for ");
+        Serial.print(timeout_ms);
+        Serial.println("ms...");
+
+        uint32_t start_ms = millis();
+        while(stream.available() < 1) {
+            if(millis() >= start_ms + timeout_ms) {
+                Serial.println("Stream timeout!");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // http://www.codeguru.com/cpp/cpp/algorithms/strings/article.php/c12759/URI-Encoding-and-Decoding.htm
+    // Only alphanum is safe.
+    const char SAFE[256] =
+    {
+        /*      0 1 2 3  4 5 6 7  8 9 A B  C D E F */
+        /* 0 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+        /* 1 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+        /* 2 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+        /* 3 */ 1,1,1,1, 1,1,1,1, 1,1,0,0, 0,0,0,0,
+    
+        /* 4 */ 0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+        /* 5 */ 1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,0,0,
+        /* 6 */ 0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+        /* 7 */ 1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,0,0,
+    
+        /* 8 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+        /* 9 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+        /* A */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+        /* B */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+    
+        /* C */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+        /* D */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+        /* E */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+        /* F */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
+    };
+
+    String uri_encode(const String& uri)
+    {
+        static const char DEC2HEX[16 + 1] = "0123456789ABCDEF";
+
+        String result;
+        for(int i=0; i<uri.length(); ++i) {
+            const char current = uri[i];
+            if(SAFE[current]) {
+                result += current;
+            } else {
+                // escape this char
+                result += '%';
+                result += DEC2HEX[current >> 4];
+                result += DEC2HEX[current & 0x0F];
+            }
+        }
+        return result;
+    }
 }

@@ -19,15 +19,23 @@
 #if !defined __ES_SLACK_H__
 #define __ES_SLACK_H__
 
+#include <Client.h>
+
 namespace energonsoftware
 {
     class Slack
     {
     private:
+        static const String SlackApiHost;
+        static const uint16_t SlackApiPort = 443;
         static const uint32_t TimeoutMs = 60 * 1000;
 
     private:
-        static String build_post_message(const String& api_token, const String& channel, const String& username, const String& message);
+        static String build_start_rtm_uri(const String& api_token);
+        static String build_post_message_uri(const String& api_token, const String& channel, const String& username, const String& message);
+
+        static void send_packet(Client& client, const String& uri);
+        static void recv_response(Client& client);
 
     public:
         Slack();
@@ -41,10 +49,11 @@ namespace energonsoftware
         const String& get_username() const { return _username; }
 
     public:
-        bool connect(INetwork& network);
-        void disconnect(INetwork& network);
+        bool connect(Client& client);
+        void disconnect(Client& client);
 
-        void send_message(INetwork& network, const String& channel, const String& message);
+        void start(Client& client);
+        void send_message(Client& client, const String& channel, const String& message);
 
     private:
         String _api_token;

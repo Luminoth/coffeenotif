@@ -19,16 +19,11 @@
 #if !defined __ES_WIFI_H__
 #define __ES_WIFI_H__
 
-#include <WiFi101.h>
-#include <WiFiUdp.h>
-#include "es_network.h"
+#include <IPAddress.h>
 
 namespace energonsoftware
 {
-    // TODO: the coupling here is all fucked up
-    // need to wrap the WiFiClient/UDP classes
-    // as well as the WiFi interface
-    class WiFi : public INetwork
+    class WiFi
     {
     public:
         static void print_firmware_version();
@@ -74,32 +69,8 @@ namespace energonsoftware
     public:
         bool init();
 
-        void connect(int error_led_pin=-1);
+        bool connect(int error_led_pin=-1);
         void disconnect();
-
-    public:
-        virtual bool connect_server(const String& host, uint16_t port) override;
-        bool connect_server(const IPAddress& address, uint16_t port);
-
-        virtual bool connect_server_ssl(const String& host, uint16_t port) override;
-
-        virtual void disconnect_server() override;
-
-        virtual void println(const String& message="") override;
-
-        virtual int available() override;
-
-        virtual String read_string() override;
-
-    public:
-        virtual bool begin_udp(uint16_t local_port) override;
-        virtual void end_udp() override;
-
-        virtual bool send_udp_packet(const String& host, uint16_t remote_port, const byte* const buffer, size_t buffer_len) override;
-        bool send_udp_packet(const IPAddress& address, uint16_t remote_port, const byte* const buffer, size_t buffer_len);
-        virtual int udp_available() override;
-        virtual bool parse_udp_packet() override;
-        virtual bool read_udp_packet(byte* const buffer, size_t buffer_len) override;
 
     private:
         bool _use_dhcp;
@@ -114,9 +85,6 @@ namespace energonsoftware
 
         bool _connected;
         uint32_t _reconnect_delay_ms;
-
-        WiFiClient _client;
-        WiFiUDP _udp;
     };
 }
 
