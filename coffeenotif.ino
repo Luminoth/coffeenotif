@@ -16,12 +16,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-// https://www.arduino.cc/en/Guide/ArduinoZero
-// http://arduino.stackexchange.com/questions/13178/classes-and-objects-how-many-and-which-file-types-i-actually-need-to-use-them
-
-// **** https://www.arduino.cc/en/Tutorial.Wifi101GoogleCalendar (great example!)
-// https://www.arduino.cc/en/Tutorial/WiFiWebClient
-
 #include <RTCZero.h>
 #include <SPI.h>
 #include <WiFi101.h>
@@ -30,6 +24,21 @@
 #include "es_ntp.h"
 #include "es_slack.h"
 #include "es_wifi.h"
+
+//// PIN SETTINGS
+// https://www.arduino.cc/en/Guide/ArduinoZero
+
+// NOTE: all Zero pins are PWM except 2 and 7
+// NOTE: WiFi101 shield uses digital pins 5, 6 (the onboard button), 7 and should not be used
+// the docs say pins 11, 12, and 13 are used for SPI but they're safe to re-use, I guess?
+// pin 10 is slave select (can this be re-used?)
+
+const uint32_t ERROR_LED_PIN = 3;       // red
+const uint32_t SLACK_LED_PIN = 4;       // blue
+const uint32_t BREWING_LED_PIN = 8;     // green
+
+const uint32_t INPUT_BUTTON_PIN = 2;
+//// END PIN SETTINGS
 
 //// WIFI SETTINGS (WPA2 Enterprise not supported)
 const wl_enc_type ENCRYPTION_TYPE = ENC_TYPE_NONE;
@@ -43,28 +52,33 @@ const IPAddress IP_ADDRESS(127, 0, 0, 1);
 //// END WIFI SETTINGS
 
 //// SLACK SETTINGS
-const String SLACK_API_TOKEN = "<YOUR-SLACK-API-TOKEN>";
-const String SLACK_USERNAME = "<YOUR-SLACK-BOT-USERNAME>";
-const String SLACK_CHANNEL = "#general";
+const char SLACK_API_TOKEN[] = "<YOUR-SLACK-API-TOKEN>";
+const char SLACK_USERNAME[] = "<YOUR-SLACK-BOT-USERNAME>";
+const char SLACK_CHANNEL[] = "#general";
 //// END SLACK SETTINGS
+
+//// COFFEE SETTINGS
+const uint32_t COFFEE_BREW_MS = 2 * 60 * 1000;
+
+const char* COFFEE_STARTED_NOTIFS[] = {
+    "Coffee Started!",
+    "Fresh Pot Incoming!"
+};
+const size_t COFFEE_STARTED_NOTIF_COUNT = sizeof(COFFEE_STARTED_NOTIFS) / sizeof(COFFEE_STARTED_NOTIFS[0]);
+
+const char* COFFEE_FINISHED_NOTIFS[] = {
+    "Coffee Finished!",
+    "Fresh Pot Ready!"
+};
+const size_t COFFEE_FINISHED_NOTIF_COUNT = sizeof(COFFEE_FINISHED_NOTIFS) / sizeof(COFFEE_FINISHED_NOTIFS[0]);
+//// END COFFEE SETTINGS
 
 //// NTP SETTINGS
 const uint16_t LOCAL_NTP_PORT = 2123;
-const String NTP_HOST("pool.ntp.org");
+const char NTP_HOST[] = "pool.ntp.org";
 //// END NTP SETTINGS
 
-//// PIN SETTINGS
-
-// NOTE: all Zero pins are PWM except 2 and 7
-// NOTE: WiFi101 shield uses digital pins 5, 6 (the onboard button), 7 and should not be used
-// the docs say pins 11, 12, and 13 are used for SPI but they're safe to re-use, I guess?
-// pin 10 is slave select (can this be re-used?)
-
-const uint32_t ERROR_LED_PIN = 3;       // red
-const uint32_t SLACK_LED_PIN = 4;       // blue
-
-const uint32_t INPUT_BUTTON_PIN = 9;
-//// END PIN SETTINGS
+// TODO: this stuff should be encapsulated in a State structure
 
 energonsoftware::WiFi g_wifi;
 energonsoftware::Slack g_slack;
@@ -77,11 +91,11 @@ unsigned long g_last_ntp_update_ms = 0;
 
 int g_last_button_state = LOW;
 
-unsigned long g_last_coffee_start_ms = 0;
+uint32_t g_last_coffee_start_ms = 0;
 
 void update_rtc()
 {
-    unsigned long current_ms = millis();
+    uint32_t current_ms = millis();
     if(g_last_ntp_update_ms > 0 && g_last_ntp_update_ms + NTP_UPDATE_RATE_MS >= current_ms) {
         return;
     }
@@ -117,24 +131,60 @@ void start_slack()
     analogWrite(SLACK_LED_PIN, 0);
 }
 
-void notify_slack_channel()
+const char* random_coffee_notification(bool finished)
+{
+    return finished ? COFFEE_FINISHED_NOTIFS[random(COFFEE_FINISHED_NOTIF_COUNT)] : COFFEE_STARTED_NOTIFS[random(COFFEE_STARTED_NOTIF_COUNT)];
+}
+
+void notify_slack_channel(bool finished)
 {
     analogWrite(SLACK_LED_PIN, 255);
 
     g_slack.connect(g_slack_client);
-    g_slack.send_message(g_slack_client, SLACK_CHANNEL, "/giphy coffee brewing");
+    g_slack.send_message(g_slack_client, SLACK_CHANNEL, random_coffee_notification(finished));
     g_slack.disconnect(g_slack_client);
 
     analogWrite(SLACK_LED_PIN, 0);
+}
+
+void start_coffee_brewing()
+{
+    uint32_t current_ms = millis();
+    if(0 != g_last_coffee_start_ms && current_ms < g_last_coffee_start_ms + COFFEE_BREW_MS) {
+        return;
+    }
+
+    g_last_coffee_start_ms = current_ms;
+    analogWrite(BREWING_LED_PIN, 255);
+    notify_slack_channel(false);
+}
+
+void update_coffee_brewing()
+{
+    uint32_t current_ms = millis();
+    if(0 == g_last_coffee_start_ms || current_ms < g_last_coffee_start_ms + COFFEE_BREW_MS) {
+        return;
+    }
+
+    g_last_coffee_start_ms = 0;
+    analogWrite(BREWING_LED_PIN, 0);
+    notify_slack_channel(true);
 }
 
 void setup()
 {
     energonsoftware::init_serial(115200);
 
+    // if analog input pin 0 is unconnected, random analog
+    // noise will cause the call to randomSeed() to generate
+    // different seed numbers each time the sketch runs.
+    // randomSeed() will then shuffle the random function.
+    randomSeed(analogRead(0));
+
     Serial.println("Initializing I/O...");
     pinMode(ERROR_LED_PIN, OUTPUT);
     pinMode(SLACK_LED_PIN, OUTPUT);
+    pinMode(BREWING_LED_PIN, OUTPUT);
     pinMode(INPUT_BUTTON_PIN, INPUT);
 
     g_wifi.set_encryption_type(ENCRYPTION_TYPE);
@@ -159,14 +209,16 @@ void setup()
 
 void loop()
 {
-    if(g_wifi.connect(ERROR_LED_PIN)) {
-        start_slack();
-    }
+    bool connected = g_wifi.connect(ERROR_LED_PIN);
 
     update_rtc();
 
-    if(poll_button_released()) {
-        g_last_coffee_start_ms = millis();
-        notify_slack_channel();
+    if(connected) {
+        start_slack();
     }
+
+    if(poll_button_released()) {
+        start_coffee_brewing();
+    }
+    update_coffee_brewing();
 }

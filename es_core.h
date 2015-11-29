@@ -29,7 +29,7 @@ namespace energonsoftware
 
     bool poll_timeout(Stream& stream, uint32_t timeout_ms);
 
-    String uri_encode(const String& uri);
+    String uri_encode(const char* const uri);
 }
 
 #endif

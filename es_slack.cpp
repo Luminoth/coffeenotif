@@ -20,38 +20,32 @@
 #include "es_core.h"
 #include "es_slack.h"
 
-namespace energonsoftware
-{
 // https://api.slack.com/
 // https://api.slack.com/getting-started
 // https://api.slack.com/bot-users
 // https://api.slack.com/rtm
 
-    const String Slack::SlackApiHost = String("slack.com");
+// No slash commands: https://twitter.com/Luminoth82/status/671069517938827264
 
-    String Slack::build_start_rtm_uri(const String& api_token)
-    {
-        return String("/api/rtm.start")
-            + "?token=" + energonsoftware::uri_encode(api_token);
-    }
+namespace energonsoftware
+{
+    const char Slack::SlackApiHost[] = "slack.com";
 
-    String Slack::build_post_message_uri(const String& api_token, const String& channel, const String& username, const String& message)
+    void Slack::send_packet(Client& client, const char* const uri)
     {
-        return String("/api/chat.postMessage")
-            + "?token=" + energonsoftware::uri_encode(api_token)
-            + "&channel=" + energonsoftware::uri_encode(channel)
-            + "&text=" + energonsoftware::uri_encode(message)
-            + "&username=" + energonsoftware::uri_encode(username)
-            + "&parse=full";
-    }
+        Serial.print("Sending message to Slack API: ");
+        Serial.println(uri);
 
-    void Slack::send_packet(Client& client, const String& uri)
-    {
-        Serial.println("Sending message to Slack API: " + uri);
-        client.println("GET " + uri + " HTTP/1.1");
-        client.println("Host: " + SlackApiHost);
+        client.print("GET ");
+        client.print(uri);
+        client.println(" HTTP/1.1");
+
+        client.print("Host: ");
+        client.println(SlackApiHost);
+
         client.println("User-Agent: ArduinoWiFi/1.1");
         client.println("Connection: close");
+
         client.println();
     }
 
@@ -61,7 +55,8 @@ namespace energonsoftware
             return;
         }
 
-        Serial.println("Slack API response: " + client.readString());
+        String response = client.readString();
+        Serial.println("Slack API response: " + response);
     }
 
     Slack::Slack()
@@ -71,8 +66,13 @@ namespace energonsoftware
 
     bool Slack::connect(Client& client)
     {
-        Serial.println("Connecting to Slack API (" + SlackApiHost + ":" + SlackApiPort + ")...");
-        return client.connect(SlackApiHost.c_str(), SlackApiPort) > 0;
+        Serial.print("Connecting to Slack API (");
+        Serial.print(SlackApiHost);
+        Serial.print(":");
+        Serial.print(SlackApiPort);
+        Serial.println(")...");
+
+        return client.connect(SlackApiHost, SlackApiPort) > 0;
     }
 
     void Slack::disconnect(Client& client)
@@ -81,15 +81,31 @@ namespace energonsoftware
         client.stop();
     }
 
-    void Slack::start(Client& client)
+    void Slack::start(Client& client) const
     {
-        send_packet(client, build_start_rtm_uri(_api_token));
+        send_packet(client, build_start_rtm_uri().c_str());
         recv_response(client);
     }
 
-    void Slack::send_message(Client& client, const String& channel, const String& message)
+    void Slack::send_message(Client& client, const char* const channel, const char* const message) const
     {
-        send_packet(client, build_post_message_uri(_api_token, channel, _username, message));
+        send_packet(client, build_post_message_uri(channel, message).c_str());
         recv_response(client);
+    }
+
+    String Slack::build_start_rtm_uri() const
+    {
+        return String("/api/rtm.start")
+            + "?token=" + energonsoftware::uri_encode(_api_token.c_str());
+    }
+
+    String Slack::build_post_message_uri(const char* const channel, const char* const message) const
+    {
+        return String("/api/chat.postMessage")
+            + "?token=" + energonsoftware::uri_encode(_api_token.c_str())
+            + "&channel=" + energonsoftware::uri_encode(channel)
+            + "&text=" + energonsoftware::uri_encode(message)
+            + "&username=" + energonsoftware::uri_encode(_username.c_str())
+            + "&parse=full";
     }
 }

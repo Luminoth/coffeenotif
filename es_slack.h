@@ -26,15 +26,12 @@ namespace energonsoftware
     class Slack
     {
     private:
-        static const String SlackApiHost;
+        static const char SlackApiHost[];
         static const uint16_t SlackApiPort = 443;
         static const uint32_t TimeoutMs = 60 * 1000;
 
     private:
-        static String build_start_rtm_uri(const String& api_token);
-        static String build_post_message_uri(const String& api_token, const String& channel, const String& username, const String& message);
-
-        static void send_packet(Client& client, const String& uri);
+        static void send_packet(Client& client, const char* const uri);
         static void recv_response(Client& client);
 
     public:
@@ -52,8 +49,12 @@ namespace energonsoftware
         bool connect(Client& client);
         void disconnect(Client& client);
 
-        void start(Client& client);
-        void send_message(Client& client, const String& channel, const String& message);
+        void start(Client& client) const;
+        void send_message(Client& client, const char* const channel, const char* const message) const;
+
+    private:
+        String build_start_rtm_uri() const;
+        String build_post_message_uri(const char* const channel, const char* const message) const;
 
     private:
         String _api_token;

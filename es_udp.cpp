@@ -32,11 +32,17 @@ namespace energonsoftware
         _udp.stop();
     }
 
-    bool UdpWrapper::send_packet(const String& host, uint16_t remote_port, const byte* const buffer, size_t buffer_len)
+    bool UdpWrapper::send_packet(const char* const host, uint16_t remote_port, const byte* const buffer, size_t buffer_len)
     {
-        Serial.println("Sending UDP packet to " + host + ":" + remote_port + " (" + buffer_len + ")");
+        Serial.print("Sending UDP packet to ");
+        Serial.print(host);
+        Serial.print(":");
+        Serial.print(remote_port);
+        Serial.print(" (");
+        Serial.print(buffer_len);
+        Serial.println(")");
 
-        if(_udp.beginPacket(host.c_str(), remote_port) < 1) {
+        if(_udp.beginPacket(host, remote_port) < 1) {
             Serial.println("Failed to connect to UDP host!");
             return false;
         }

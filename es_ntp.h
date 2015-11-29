@@ -33,7 +33,7 @@ namespace energonsoftware
         static const unsigned long SeventyYearsSeconds = 2208988800UL;
 
     private:
-        static bool send_packet(UdpWrapper& udp, const String& host, byte* const buffer);
+        static bool send_packet(UdpWrapper& udp, const char* const host, byte* const buffer);
         static bool recv_packet(UDP& udp, byte* const buffer);
 
         static unsigned long parse_epoch(const byte* const buffer);
@@ -43,7 +43,7 @@ namespace energonsoftware
         virtual ~Ntp() throw() { }
 
     public:
-        bool set_rtc(RTCZero& rtc, UDP& udp, uint16_t local_port, const String& host);
+        bool set_rtc(RTCZero& rtc, UDP& udp, uint16_t local_port, const char* const host);
     };
 }
 

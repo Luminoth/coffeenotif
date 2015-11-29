@@ -25,7 +25,7 @@
 
 namespace energonsoftware
 {
-    bool Ntp::send_packet(UdpWrapper& udp, const String& host, byte* const buffer)
+    bool Ntp::send_packet(UdpWrapper& udp, const char* const host, byte* const buffer)
     {
         buffer[0] = 0b11100011;     // LI, Version, Mode
         buffer[1] = 0;              // Stratum, or type of clock
@@ -70,9 +70,11 @@ namespace energonsoftware
         return ntp_time - SeventyYearsSeconds;
     }
 
-    bool Ntp::set_rtc(RTCZero& rtc, UDP& udp, uint16_t local_port, const String& host)
+    bool Ntp::set_rtc(RTCZero& rtc, UDP& udp, uint16_t local_port, const char* const host)
     {
-        Serial.println("Setting RTC from NTP server " + host + "...");
+        Serial.print("Setting RTC from NTP server ");
+        Serial.print(host);
+        Serial.println("...");
 
         UdpWrapper udp_wrapped(udp, local_port);
         if(!udp_wrapped.is_valid()) {

@@ -32,10 +32,10 @@ namespace energonsoftware
     public:
         bool is_valid() const { return _valid; }
 
-        UDP& udp() const { return _udp; }
+        UDP& udp() const { return _udp;} 
 
     public:
-        bool send_packet(const String& host, uint16_t remote_port, const byte* const buffer, size_t buffer_len);
+        bool send_packet(const char* const host, uint16_t remote_port, const byte* const buffer, size_t buffer_len);
 
     private:
         UDP& _udp;
