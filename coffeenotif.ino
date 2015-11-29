@@ -25,6 +25,8 @@
 #include "es_slack.h"
 #include "es_wifi.h"
 
+const char VERSION[] = "1.0";
+
 //// PIN SETTINGS
 // https://www.arduino.cc/en/Guide/ArduinoZero
 
@@ -180,6 +182,10 @@ void setup()
     // different seed numbers each time the sketch runs.
     // randomSeed() will then shuffle the random function.
     randomSeed(analogRead(0));
+
+    Serial.print("Coffee notifier v");
+    Serial.print(VERSION);
+    Serial.println(" coming online...");
 
     Serial.println("Initializing I/O...");
     pinMode(ERROR_LED_PIN, OUTPUT);
