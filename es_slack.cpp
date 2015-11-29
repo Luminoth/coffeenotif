@@ -22,14 +22,12 @@
 
 namespace energonsoftware
 {
-    String Slack::build_message(const String& api_token, const String& channel, const String& username, const String& message)
+// http://forum.arduino.cc/index.php/topic,99538.0.html
+
+    String Slack::build_post_message(const String& api_token, const String& channel, const String& username, const String& message)
     {
-        return String("{ ")
-            + "\"token\": \"" + api_token + "\", "
-            + "\"channel\": \"" + channel + "\", "
-            + "\"text\": \"" + message + "\", "
-            + "\"username\": \"" + username + "\""
-            + " }";
+// https://slack.com/api/chat.postMessage?channel=%23general&text=test&username=derp_bot&pretty=1 
+        return String("/api/chat.postMessage?channel=" + channel + "&text=" + message + "&username=" + username);
     }
 
     Slack::Slack()
@@ -51,15 +49,14 @@ namespace energonsoftware
 
     void Slack::send_message(INetwork& network, const String& channel, const String& message)
     {
-        String api_message = build_message(_api_token, channel, _username, message);
-        Serial.println("Sending message to Slack API: " + api_message);
+        String post_message = build_post_message(_api_token, channel, _username, message);
+        Serial.println("Sending message to Slack API: " + post_message);
 
-        network.println("GET /api/chat.postMessage HTTP/1.1");
+        network.println("GET " + post_message + " HTTP/1.1");
         network.println("Host: slack.com");
         network.println("User-Agent: ArduinoWiFi/1.1");
         network.println("Connection: close");
         network.println();
-        network.println(api_message);
 
 // http://blog.devpost.com/post/93328687487/hacking-the-office-arduinos-extensions-and
 // https://api.slack.com/
@@ -67,7 +64,6 @@ namespace energonsoftware
 // https://api.slack.com/bot-users
 // https://api.slack.com/incoming-webhooks
 // https://api.slack.com/rtm
-// https://slack.com/api/chat.postMessage?channel=%23general&text=test&username=derp_bot&pretty=1 
 
 // wat?
 

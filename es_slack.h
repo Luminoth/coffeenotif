@@ -27,7 +27,7 @@ namespace energonsoftware
         static const uint32_t TimeoutMs = 60 * 1000;
 
     private:
-        static String build_message(const String& api_token, const String& channel, const String& username, const String& message);
+        static String build_post_message(const String& api_token, const String& channel, const String& username, const String& message);
 
     public:
         Slack();
