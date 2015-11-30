@@ -55,8 +55,8 @@ const IPAddress IP_ADDRESS(127, 0, 0, 1);
 
 //// SLACK SETTINGS
 const char SLACK_API_TOKEN[] = "<YOUR-SLACK-API-TOKEN>";
-const char SLACK_USERNAME[] = "<YOUR-SLACK-BOT-USERNAME>";
-const char SLACK_CHANNEL[] = "#general";
+const char SLACK_USERNAME[] = "coffee_bot";
+const char SLACK_CHANNEL[] = "#coffee";
 //// END SLACK SETTINGS
 
 //// COFFEE SETTINGS
