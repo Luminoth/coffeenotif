@@ -60,7 +60,7 @@ const char SLACK_CHANNEL[] = "#coffee";
 //// END SLACK SETTINGS
 
 //// COFFEE SETTINGS
-const uint32_t COFFEE_BREW_MS = 2 * 60 * 1000;
+const uint32_t COFFEE_BREW_MS = 6 * 60 * 1000;
 
 const char* COFFEE_STARTED_NOTIFS[] = {
     "Coffee Started!",
