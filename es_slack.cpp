@@ -26,6 +26,7 @@
 // https://api.slack.com/rtm
 
 // No slash commands: https://twitter.com/Luminoth82/status/671069517938827264
+// possible giphy solution: https://github.com/Giphy/GiphyAPI
 
 namespace energonsoftware
 {
