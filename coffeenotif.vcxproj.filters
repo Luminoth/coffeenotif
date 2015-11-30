@@ -28,6 +28,9 @@
     <None Include="README.md">
       <Filter>Solution Files</Filter>
     </None>
+    <None Include="TODO.md">
+      <Filter>Solution Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.coffeenotif.vsarduino.h">

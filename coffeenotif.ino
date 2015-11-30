@@ -84,6 +84,7 @@ const char NTP_HOST[] = "pool.ntp.org";
 
 energonsoftware::WiFi g_wifi;
 energonsoftware::Slack g_slack;
+WiFiServer g_http_server(80);
 WiFiSSLClient g_slack_client;
 WiFiUDP g_ntp_client;
 
@@ -173,6 +174,18 @@ void update_coffee_brewing()
     notify_slack_channel(true);
 }
 
+void http_listen()
+{
+    auto client = g_http_server.available();
+    if(!client) {
+        return;
+    }
+
+    // TODO
+
+    client.stop();    
+}
+
 void setup()
 {
     energonsoftware::init_serial(115200);
@@ -220,6 +233,7 @@ void loop()
     update_rtc();
 
     if(connected) {
+        g_http_server.begin();
         start_slack();
     }
 
@@ -227,4 +241,6 @@ void loop()
         start_coffee_brewing();
     }
     update_coffee_brewing();
+
+    http_listen();
 }
