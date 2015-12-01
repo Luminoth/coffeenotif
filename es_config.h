@@ -16,22 +16,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#if !defined __ES_CORE_H__
-#define __ES_CORE_H__
-
-#include <Stream.h>
+#if !defined __ES_CONFIG_H__
+#define __ES_CONFIG_H__
 
 namespace energonsoftware
 {
-    void safe_exit(int led_pin=-1);
-
-    void init_serial(unsigned long baud_rate);
-
-    bool init_sd(uint32_t select_pin);
-
-    bool poll_timeout(Stream& stream, uint32_t timeout_ms);
-
-    String uri_encode(const char* const uri);
 }
 
 #endif

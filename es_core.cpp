@@ -17,6 +17,7 @@
 */
 
 #include <Arduino.h>
+#include <SD.h>
 #include "es_core.h"
 
 namespace energonsoftware
@@ -38,6 +39,11 @@ namespace energonsoftware
         // wait for serial port to connect
         // (needed for native USB port only?)
         while(!Serial);
+    }
+
+    bool init_sd(uint32_t select_pin)
+    {
+        return SD.begin(select_pin);
     }
 
     bool poll_timeout(Stream& stream, uint32_t timeout_ms)

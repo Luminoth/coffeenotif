@@ -17,9 +17,11 @@
 */
 
 #include <RTCZero.h>
+#include <SD.h>
 #include <SPI.h>
 #include <WiFi101.h>
 #include <WiFiUdp.h>
+#include "es_config.h"
 #include "es_core.h"
 #include "es_ntp.h"
 #include "es_slack.h"
@@ -31,15 +33,17 @@ const char VERSION[] = "1.0";
 // https://www.arduino.cc/en/Guide/ArduinoZero
 
 // NOTE: all Zero pins are PWM except 2 and 7
-// NOTE: WiFi101 shield uses digital pins 5, 6 (the onboard button), 7 and should not be used
-// the docs say pins 11, 12, and 13 are used for SPI but they're safe to re-use, I guess?
-// pin 10 is slave select (can this be re-used?)
+// WiFi101 shield uses digital pins 5, 6 (the onboard button), 7 and should not be used
+// pin 10 is slave select on the Zero
+// pins 11, 12, and 13 are used for SPI
 
-const uint32_t ERROR_LED_PIN = 3;       // red
-const uint32_t SLACK_LED_PIN = 4;       // blue
-const uint32_t BREWING_LED_PIN = 8;     // green
+const uint32_t ERROR_LED_PIN = 3;       // red (error)
+const uint32_t SLACK_LED_PIN = 4;       // blue (communicating with slack)
+const uint32_t BREWING_LED_PIN = 8;     // green (brewing coffee)
 
 const uint32_t INPUT_BUTTON_PIN = 2;
+
+const uint32_t CHIP_SELECT_PIN = 10;
 //// END PIN SETTINGS
 
 //// WIFI SETTINGS (WPA2 Enterprise not supported)
@@ -78,9 +82,12 @@ const size_t COFFEE_FINISHED_NOTIF_COUNT = sizeof(COFFEE_FINISHED_NOTIFS) / size
 //// NTP SETTINGS
 const uint16_t LOCAL_NTP_PORT = 2123;
 const char NTP_HOST[] = "pool.ntp.org";
+const int NTP_UPDATE_RATE_MS = 1 * 60 * 60 * 1000;  // 1 hour updates
 //// END NTP SETTINGS
 
 // TODO: this stuff should be encapsulated in a State structure
+
+bool g_has_sd_card = false;
 
 energonsoftware::WiFi g_wifi;
 energonsoftware::Slack g_slack;
@@ -89,7 +96,6 @@ WiFiSSLClient g_slack_client;
 WiFiUDP g_ntp_client;
 
 RTCZero rtc;
-const int NTP_UPDATE_RATE_MS = 1 * 60 * 60 * 1000;  // 1 hour updates
 unsigned long g_last_ntp_update_ms = 0;
 
 int g_last_button_state = LOW;
@@ -186,8 +192,15 @@ void http_listen()
     client.stop();    
 }
 
+void init_config()
+{
+    // TODO: set the default config values (this includes the serial baud rate!)
+}
+
 void setup()
 {
+    init_config();
+
     energonsoftware::init_serial(115200);
 
     // if analog input pin 0 is unconnected, random analog
@@ -205,6 +218,14 @@ void setup()
     pinMode(SLACK_LED_PIN, OUTPUT);
     pinMode(BREWING_LED_PIN, OUTPUT);
     pinMode(INPUT_BUTTON_PIN, INPUT);
+
+    g_has_sd_card = energonsoftware::init_sd(CHIP_SELECT_PIN);
+    Serial.print("Have SD card? ");
+    Serial.println(g_has_sd_card ? "Yes" : "No");
+
+    if(g_has_sd_card) {
+        // TODO: read the config from the SD card
+    }
 
     g_wifi.set_encryption_type(ENCRYPTION_TYPE);
     g_wifi.set_ssid(WIFI_SSID);
