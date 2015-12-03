@@ -17,8 +17,36 @@
 */
 
 #include <Arduino.h>
+#include <SD.h>
 #include "es_config.h"
 
 namespace energonsoftware
 {
+    const char Config::CONFIG_FILE[] = "config.cfg";
+    
+    bool Config::read_from_sd()
+    {
+        File configFile = SD.open(CONFIG_FILE);
+        if(!configFile) {
+            Serial.print("Unable to open config file '");
+            Serial.print(CONFIG_FILE);
+            Serial.print("'!");
+            return false;
+        }
+        
+        String config;
+        while(configFile.available()) {
+            config += configFile.readString();
+        }
+        
+        configFile.close();
+        
+        return parse_config(config);
+    }
+    
+    bool Config::parse_config(const String& config)
+    {
+// TODO
+        return true;
+    }
 }

@@ -49,8 +49,8 @@ namespace energonsoftware
         bool connect(Client& client);
         void disconnect(Client& client);
 
-        void start(Client& client) const;
-        void send_message(Client& client, const char* const channel, const char* const message) const;
+        void start(Client& client);
+        void send_message(Client& client, const char* const channel, const char* const message);
 
     private:
         String build_start_rtm_uri() const;

@@ -82,16 +82,20 @@ namespace energonsoftware
         client.stop();
     }
 
-    void Slack::start(Client& client) const
+    void Slack::start(Client& client)
     {
+        connect(client);
         send_packet(client, build_start_rtm_uri().c_str());
         recv_response(client);
+        disconnect(client);
     }
 
-    void Slack::send_message(Client& client, const char* const channel, const char* const message) const
+    void Slack::send_message(Client& client, const char* const channel, const char* const message)
     {
+        connect(client);
         send_packet(client, build_post_message_uri(channel, message).c_str());
         recv_response(client);
+        disconnect(client);
     }
 
     String Slack::build_start_rtm_uri() const
