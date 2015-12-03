@@ -72,7 +72,7 @@ namespace energonsoftware
         String result;
 
         const char* current = uri;
-        while(NULL != *current) {
+        while('\0' != *current) {
             char ch = *current;
             if(isAlphaNumeric(ch)) {
                 result += ch;
