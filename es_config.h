@@ -21,6 +21,28 @@
 
 namespace energonsoftware
 {
+    class Config
+    {
+    private:
+        static const char CONFIG_FILE[];
+        
+    public:
+        const String& get_wifi_ssid() const { return _wifi_ssid; }
+        void set_wifi_ssid(const String& wifi_ssid) { _wifi_ssid = wifi_ssid; }
+
+    public:
+        // NOTE: this assumes the SD card is available
+        bool read_from_sd();
+        
+    private:
+        bool parse_config(const String& config);
+    
+    private:
+        String _wifi_ssid;
+        String _wifi_key;
+        int _wifi_key_index;
+        String _wifi_password;
+    };
 }
 
 #endif

@@ -177,4 +177,13 @@ namespace energonsoftware
         ::WiFi.disconnect();
         _connected = false;
     }
+
+    String WiFi::get_local_ip_address_str() const
+    {
+        static char ipstr[24];
+
+        IPAddress ip_address = ::WiFi.localIP();
+        sprintf(ipstr, "%d.%d.%d.%d", ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
+        return ipstr;
+    }
 }

@@ -89,6 +89,7 @@ const int NTP_UPDATE_RATE_MS = 1 * 60 * 60 * 1000;  // 1 hour updates
 
 bool g_has_sd_card = false;
 
+energonsoftware::Config g_config;
 energonsoftware::WiFi g_wifi;
 energonsoftware::Slack g_slack;
 WiFiServer g_http_server(80);
@@ -133,9 +134,8 @@ void start_slack()
 
     analogWrite(SLACK_LED_PIN, 255);
 
-    g_slack.connect(g_slack_client);
     g_slack.start(g_slack_client);
-    g_slack.disconnect(g_slack_client);
+    g_slack.send_message(g_slack_client, SLACK_CHANNEL, g_wifi.get_local_ip_address_str().c_str());
 
     analogWrite(SLACK_LED_PIN, 0);
 }
@@ -149,9 +149,7 @@ void notify_slack_channel(bool finished)
 {
     analogWrite(SLACK_LED_PIN, 255);
 
-    g_slack.connect(g_slack_client);
     g_slack.send_message(g_slack_client, SLACK_CHANNEL, random_coffee_notification(finished));
-    g_slack.disconnect(g_slack_client);
 
     analogWrite(SLACK_LED_PIN, 0);
 }
@@ -187,7 +185,18 @@ void http_listen()
         return;
     }
 
-    // TODO
+    while(client.available()) {
+        client.readString();
+    }
+    
+    client.println("HTTP/1.1 200 OK");
+    client.println("Content-Type: application/json");
+    client.println("Connection: close");
+    client.println();
+    client.print("{");
+// TODO: write diagnostic stuff here
+    client.println("}");
+    client.flush();
 
     client.stop();    
 }
@@ -224,7 +233,7 @@ void setup()
     Serial.println(g_has_sd_card ? "Yes" : "No");
 
     if(g_has_sd_card) {
-        // TODO: read the config from the SD card
+        g_config.read_from_sd();
     }
 
     g_wifi.set_encryption_type(ENCRYPTION_TYPE);

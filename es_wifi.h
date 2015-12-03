@@ -40,6 +40,8 @@ namespace energonsoftware
         virtual ~WiFi() throw() { }
 
     public:
+// TODO: this should just take a config object
+// and hold a reference to it or something
         void set_use_dhcp(bool use_dhcp) { _use_dhcp = use_dhcp; }
         bool get_use_dhcp() const { return _use_dhcp; }
 
@@ -71,6 +73,8 @@ namespace energonsoftware
 
         bool connect(int error_led_pin=-1);
         void disconnect();
+
+        String get_local_ip_address_str() const;
 
     private:
         bool _use_dhcp;
