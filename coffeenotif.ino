@@ -46,26 +46,7 @@ const uint32_t INPUT_BUTTON_PIN = 2;
 const uint32_t CHIP_SELECT_PIN = 10;
 //// END PIN SETTINGS
 
-//// WIFI SETTINGS (WPA2 Enterprise not supported)
-const wl_enc_type ENCRYPTION_TYPE = ENC_TYPE_NONE;
-const char WIFI_SSID[] = "<YOUR-SSID>";
-const char WIFI_KEY[] = "<YOUR-WEP-KEY>";
-const int WIFI_KEY_INDEX = 0;
-const char WIFI_PASSWORD[] = "<YOUR-WPA-PASSWORD>";
-
-const bool USE_DHCP = true;
-const IPAddress IP_ADDRESS(127, 0, 0, 1);
-//// END WIFI SETTINGS
-
-//// SLACK SETTINGS
-const char SLACK_API_TOKEN[] = "<YOUR-SLACK-API-TOKEN>";
-const char SLACK_USERNAME[] = "coffee_bot";
-const char SLACK_CHANNEL[] = "#general";
-//// END SLACK SETTINGS
-
 //// COFFEE SETTINGS
-const uint32_t COFFEE_BREW_MS = 6 * 60 * 1000;
-
 const char* COFFEE_STARTED_NOTIFS[] = {
     "Coffee Started!",
     "Fresh Pot Incoming!"
@@ -78,14 +59,6 @@ const char* COFFEE_FINISHED_NOTIFS[] = {
 };
 const size_t COFFEE_FINISHED_NOTIF_COUNT = sizeof(COFFEE_FINISHED_NOTIFS) / sizeof(COFFEE_FINISHED_NOTIFS[0]);
 //// END COFFEE SETTINGS
-
-//// NTP SETTINGS
-const uint16_t LOCAL_NTP_PORT = 2123;
-const char NTP_HOST[] = "pool.ntp.org";
-const int NTP_UPDATE_RATE_MS = 1 * 60 * 60 * 1000;  // 1 hour updates
-//// END NTP SETTINGS
-
-// TODO: this stuff should be encapsulated in a State structure
 
 bool g_has_sd_card = false;
 
@@ -101,17 +74,17 @@ unsigned long g_last_ntp_update_ms = 0;
 
 int g_last_button_state = LOW;
 
-uint32_t g_last_coffee_start_ms = 0;
+unsigned long g_last_coffee_start_ms = 0;
 
 void update_rtc()
 {
     uint32_t current_ms = millis();
-    if(g_last_ntp_update_ms > 0 && g_last_ntp_update_ms + NTP_UPDATE_RATE_MS >= current_ms) {
+    if(g_last_ntp_update_ms > 0 && g_last_ntp_update_ms + g_config.get_ntp_update_rate_ms() >= current_ms) {
         return;
     }
 
     static energonsoftware::Ntp ntp;
-    ntp.set_rtc(rtc, g_ntp_client, LOCAL_NTP_PORT, NTP_HOST);
+    ntp.set_rtc(rtc, g_ntp_client, g_config.get_local_ntp_port(), g_config.get_ntp_host().c_str());
     g_last_ntp_update_ms = current_ms;
 }
 
@@ -135,7 +108,7 @@ void start_slack()
     analogWrite(SLACK_LED_PIN, 255);
 
     g_slack.start(g_slack_client);
-    g_slack.send_message(g_slack_client, SLACK_CHANNEL, g_wifi.get_local_ip_address_str().c_str());
+    g_slack.send_message(g_slack_client, g_config.get_slack_channel().c_str(), g_wifi.get_local_ip_address_str().c_str());
 
     analogWrite(SLACK_LED_PIN, 0);
 }
@@ -149,7 +122,7 @@ void notify_slack_channel(bool finished)
 {
     analogWrite(SLACK_LED_PIN, 255);
 
-    g_slack.send_message(g_slack_client, SLACK_CHANNEL, random_coffee_notification(finished));
+    g_slack.send_message(g_slack_client, g_config.get_slack_channel().c_str(), random_coffee_notification(finished));
 
     analogWrite(SLACK_LED_PIN, 0);
 }
@@ -157,7 +130,7 @@ void notify_slack_channel(bool finished)
 void start_coffee_brewing()
 {
     uint32_t current_ms = millis();
-    if(0 != g_last_coffee_start_ms && current_ms < g_last_coffee_start_ms + COFFEE_BREW_MS) {
+    if(0 != g_last_coffee_start_ms && current_ms < g_last_coffee_start_ms + g_config.get_coffee_brew_ms()) {
         return;
     }
 
@@ -169,7 +142,7 @@ void start_coffee_brewing()
 void update_coffee_brewing()
 {
     uint32_t current_ms = millis();
-    if(0 == g_last_coffee_start_ms || current_ms < g_last_coffee_start_ms + COFFEE_BREW_MS) {
+    if(0 == g_last_coffee_start_ms || current_ms < g_last_coffee_start_ms + g_config.get_coffee_brew_ms()) {
         return;
     }
 
@@ -201,16 +174,9 @@ void http_listen()
     client.stop();    
 }
 
-void init_config()
-{
-    // TODO: set the default config values (this includes the serial baud rate!)
-}
-
 void setup()
 {
-    init_config();
-
-    energonsoftware::init_serial(115200);
+    energonsoftware::init_serial(9600);
 
     // if analog input pin 0 is unconnected, random analog
     // noise will cause the call to randomSeed() to generate
@@ -227,6 +193,7 @@ void setup()
     pinMode(SLACK_LED_PIN, OUTPUT);
     pinMode(BREWING_LED_PIN, OUTPUT);
     pinMode(INPUT_BUTTON_PIN, INPUT);
+    pinMode(CHIP_SELECT_PIN, OUTPUT);
 
     g_has_sd_card = energonsoftware::init_sd(CHIP_SELECT_PIN);
     Serial.print("Have SD card? ");
@@ -236,13 +203,15 @@ void setup()
         g_config.read_from_sd();
     }
 
-    g_wifi.set_encryption_type(ENCRYPTION_TYPE);
-    g_wifi.set_ssid(WIFI_SSID);
+    g_wifi.set_encryption_type(g_config.get_wifi_encryption_type());
+    g_wifi.set_ssid(g_config.get_wifi_ssid());
     // TODO: WEP values
-    g_wifi.set_wpa_password(WIFI_PASSWORD);
+    g_wifi.set_wpa_password(g_config.get_wifi_wpa_password());
 
-    g_wifi.set_use_dhcp(USE_DHCP);
-    g_wifi.set_ip_address(IP_ADDRESS);
+    g_wifi.set_use_dhcp(g_config.get_use_dhcp());
+    if(!g_config.get_use_dhcp()) {
+        //g_wifi.set_ip_address(g_config.get_static_ip_address());
+    }
 
     if(!g_wifi.init()) {
         energonsoftware::safe_exit(ERROR_LED_PIN);
@@ -252,8 +221,8 @@ void setup()
     g_wifi.print_shield_info();
 
     Serial.println("Initializing Slack...");
-    g_slack.set_api_token(SLACK_API_TOKEN);
-    g_slack.set_username(SLACK_USERNAME);
+    g_slack.set_api_token(g_config.get_slack_api_token());
+    g_slack.set_username(g_config.get_slack_username());
 }
 
 void loop()
