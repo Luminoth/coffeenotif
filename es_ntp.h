@@ -19,7 +19,10 @@
 #if !defined __ES_NTP_H__
 #define __ES_NTP_H__
 
+#if defined ARDUINO_SAMD_ZERO
 #include <RTCZero.h>
+#endif
+
 #include "es_udp.h"
 
 namespace energonsoftware
@@ -29,7 +32,7 @@ namespace energonsoftware
     private:
         static const int NtpPacketSize = 48;
         static const uint16_t NtpPort = 123;
-        static const uint32_t TimeoutMs = 60 * 1000;
+        static const unsigned long TimeoutMs = 60000;
         static const unsigned long SeventyYearsSeconds = 2208988800UL;
 
     private:
@@ -43,7 +46,9 @@ namespace energonsoftware
         virtual ~Ntp() throw() { }
 
     public:
+#if defined ARDUINO_SAMD_ZERO
         bool set_rtc(RTCZero& rtc, UDP& udp, uint16_t local_port, const char* const host);
+#endif
     };
 }
 

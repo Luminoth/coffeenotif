@@ -16,7 +16,10 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#if defined ARDUINO_SAMD_ZERO
 #include <ctime>
+#endif
+
 #include <Arduino.h>
 #include "es_core.h"
 #include "es_ntp.h"
@@ -70,6 +73,7 @@ namespace energonsoftware
         return ntp_time - SeventyYearsSeconds;
     }
 
+#if defined ARDUINO_SAMD_ZERO
     bool Ntp::set_rtc(RTCZero& rtc, UDP& udp, uint16_t local_port, const char* const host)
     {
         Serial.print("Setting RTC from NTP server ");
@@ -113,4 +117,5 @@ namespace energonsoftware
 
         return true;
     }
+#endif
 }

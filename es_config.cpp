@@ -28,7 +28,7 @@ namespace energonsoftware
     Config::Config()
         : _wifi_encryption_type(ENC_TYPE_NONE), _wifi_ssid(), _wifi_wep_key(), _wifi_wep_key_index(0), _wifi_wpa_password(),
             _use_dhcp(true), _static_ip_address(),
-            _local_ntp_port(2123), _ntp_host("pool.ntp.org"), _ntp_update_rate_ms(60 * 60 * 1000),
+            _local_ntp_port(2123), _ntp_host("pool.ntp.org"), _ntp_update_rate_ms(3600000),
             _slack_api_token(), _slack_username(), _slack_channel()
     {
     }

@@ -16,7 +16,10 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#if defined ARDUINO_SAMD_ZERO
 #include <RTCZero.h>
+#endif
+
 #include <SD.h>
 #include <SPI.h>
 #include <WiFi101.h>
@@ -67,10 +70,13 @@ energonsoftware::WiFi g_wifi;
 energonsoftware::Slack g_slack;
 WiFiServer g_http_server(80);
 WiFiSSLClient g_slack_client;
-WiFiUDP g_ntp_client;
 
-RTCZero rtc;
+WiFiUDP g_ntp_client;
 unsigned long g_last_ntp_update_ms = 0;
+
+#if defined ARDUINO_SAMD_ZERO
+RTCZero rtc;
+#endif
 
 int g_last_button_state = LOW;
 
@@ -84,7 +90,9 @@ void update_rtc()
     }
 
     static energonsoftware::Ntp ntp;
+#if defined ARDUINO_SAMD_ZERO
     ntp.set_rtc(rtc, g_ntp_client, g_config.get_local_ntp_port(), g_config.get_ntp_host().c_str());
+#endif
     g_last_ntp_update_ms = current_ms;
 }
 
