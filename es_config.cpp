@@ -23,6 +23,19 @@
 
 namespace energonsoftware
 {
+    // TODO: move these into the config
+    const String COFFEE_STARTED_NOTIFS[] = {
+        "Coffee Started!",
+        "Fresh Pot Incoming!"
+    };
+    const size_t COFFEE_STARTED_NOTIF_COUNT = sizeof(COFFEE_STARTED_NOTIFS) / sizeof(COFFEE_STARTED_NOTIFS[0]);
+    
+    const String COFFEE_FINISHED_NOTIFS[] = {
+        "Coffee Finished!",
+        "Fresh Pot Ready!"
+    };
+    const size_t COFFEE_FINISHED_NOTIF_COUNT = sizeof(COFFEE_FINISHED_NOTIFS) / sizeof(COFFEE_FINISHED_NOTIFS[0]);
+    
     const char Config::CONFIG_FILE[] = "config.cfg";
     
     Config::Config()
@@ -80,5 +93,10 @@ namespace energonsoftware
         }
         
         return true;
+    }
+    
+    const String& Config::get_random_coffee_notification(bool finished) const
+    {
+        return finished ? COFFEE_FINISHED_NOTIFS[random(COFFEE_FINISHED_NOTIF_COUNT)] : COFFEE_STARTED_NOTIFS[random(COFFEE_STARTED_NOTIF_COUNT)];
     }
 }

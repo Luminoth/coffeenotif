@@ -32,36 +32,8 @@ namespace energonsoftware
 {
     const char Slack::SlackApiHost[] = "slack.com";
 
-    void Slack::send_packet(Client& client, const char* const uri)
-    {
-        Serial.print("Sending message to Slack API: ");
-        Serial.println(uri);
-
-        client.print("GET ");
-        client.print(uri);
-        client.println(" HTTP/1.1");
-
-        client.print("Host: ");
-        client.println(SlackApiHost);
-
-        client.println("User-Agent: ArduinoWiFi/1.1");
-        client.println("Connection: close");
-
-        client.println();
-    }
-
-    void Slack::recv_response(Client& client)
-    {
-        if(!energonsoftware::poll_timeout(client, TimeoutMs)) {
-            return;
-        }
-
-        String response = client.readString();
-        Serial.println("Slack API response: " + response);
-    }
-
     Slack::Slack()
-        : _api_token()
+        : _api_token(), _username(), _last_response()
     {
     }
 
@@ -96,6 +68,34 @@ namespace energonsoftware
         send_packet(client, build_post_message_uri(channel, message).c_str());
         recv_response(client);
         disconnect(client);
+    }
+    
+    void Slack::send_packet(Client& client, const char* const uri)
+    {
+        Serial.print("Sending message to Slack API: ");
+        Serial.println(uri);
+
+        client.print("GET ");
+        client.print(uri);
+        client.println(" HTTP/1.1");
+
+        client.print("Host: ");
+        client.println(SlackApiHost);
+
+        client.println("User-Agent: ArduinoWiFi/1.1");
+        client.println("Connection: close");
+
+        client.println();
+    }
+
+    void Slack::recv_response(Client& client)
+    {
+        if(!energonsoftware::poll_timeout(client, TimeoutMs)) {
+            return;
+        }
+
+        _last_response = client.readString();
+        Serial.println("Slack API response: " + _last_response);
     }
 
     String Slack::build_start_rtm_uri() const

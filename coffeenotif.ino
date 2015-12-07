@@ -49,88 +49,69 @@ const uint32_t INPUT_BUTTON_PIN = 2;
 const uint32_t CHIP_SELECT_PIN = 10;
 //// END PIN SETTINGS
 
-//// COFFEE SETTINGS
-const char* COFFEE_STARTED_NOTIFS[] = {
-    "Coffee Started!",
-    "Fresh Pot Incoming!"
-};
-const size_t COFFEE_STARTED_NOTIF_COUNT = sizeof(COFFEE_STARTED_NOTIFS) / sizeof(COFFEE_STARTED_NOTIFS[0]);
-
-const char* COFFEE_FINISHED_NOTIFS[] = {
-    "Coffee Finished!",
-    "Fresh Pot Ready!"
-};
-const size_t COFFEE_FINISHED_NOTIF_COUNT = sizeof(COFFEE_FINISHED_NOTIFS) / sizeof(COFFEE_FINISHED_NOTIFS[0]);
-//// END COFFEE SETTINGS
-
-bool g_has_sd_card = false;
-
 energonsoftware::Config g_config;
 energonsoftware::WiFi g_wifi;
 energonsoftware::Slack g_slack;
 WiFiServer g_http_server(80);
 WiFiSSLClient g_slack_client;
 
-WiFiUDP g_ntp_client;
-unsigned long g_last_ntp_update_ms = 0;
-
-#if defined ARDUINO_SAMD_ZERO
-RTCZero rtc;
-#endif
-
-int g_last_button_state = LOW;
-
 unsigned long g_last_coffee_start_ms = 0;
 
 void update_rtc()
 {
+    static WiFiUDP ntp_client;
+    static unsigned long last_update_ms = 0;
+    
+#if defined ARDUINO_SAMD_ZERO
+    static RTCZero rtc;
+#endif
+    
     uint32_t current_ms = millis();
-    if(g_last_ntp_update_ms > 0 && g_last_ntp_update_ms + g_config.get_ntp_update_rate_ms() >= current_ms) {
+    if(last_update_ms > 0 && last_update_ms + g_config.get_ntp_update_rate_ms() >= current_ms) {
         return;
     }
 
     static energonsoftware::Ntp ntp;
 #if defined ARDUINO_SAMD_ZERO
-    ntp.set_rtc(rtc, g_ntp_client, g_config.get_local_ntp_port(), g_config.get_ntp_host().c_str());
+    ntp.set_rtc(rtc, ntp_client, g_config.get_local_ntp_port(), g_config.get_ntp_host().c_str());
 #endif
-    g_last_ntp_update_ms = current_ms;
+    last_update_ms = current_ms;
 }
 
 bool poll_button_released()
 {
+    static int last_button_state = LOW;
+    
     bool button_released = false;
 
     int current_button_state = digitalRead(INPUT_BUTTON_PIN);
-    if(LOW == current_button_state && HIGH == g_last_button_state) {
+    if(LOW == current_button_state && HIGH == last_button_state) {
         button_released = true;
     }
 
-    g_last_button_state = current_button_state;
+    last_button_state = current_button_state;
     return button_released;
 }
 
 void start_slack()
 {
     Serial.println("Starting Slack RTM session...");
+    
+    const String message("Listening at http://" + g_wifi.get_local_ip_address_str() + "/");
 
     analogWrite(SLACK_LED_PIN, 255);
 
     g_slack.start(g_slack_client);
-    g_slack.send_message(g_slack_client, g_config.get_slack_channel().c_str(), g_wifi.get_local_ip_address_str().c_str());
+    g_slack.send_message(g_slack_client, g_config.get_slack_channel().c_str(), message.c_str());
 
     analogWrite(SLACK_LED_PIN, 0);
-}
-
-const char* random_coffee_notification(bool finished)
-{
-    return finished ? COFFEE_FINISHED_NOTIFS[random(COFFEE_FINISHED_NOTIF_COUNT)] : COFFEE_STARTED_NOTIFS[random(COFFEE_STARTED_NOTIF_COUNT)];
 }
 
 void notify_slack_channel(bool finished)
 {
     analogWrite(SLACK_LED_PIN, 255);
 
-    g_slack.send_message(g_slack_client, g_config.get_slack_channel().c_str(), random_coffee_notification(finished));
+    g_slack.send_message(g_slack_client, g_config.get_slack_channel().c_str(), g_config.get_random_coffee_notification(finished).c_str());
 
     analogWrite(SLACK_LED_PIN, 0);
 }
@@ -159,23 +140,52 @@ void update_coffee_brewing()
     notify_slack_channel(true);
 }
 
+String json_escape(const String& value)
+{
+    // TODO
+    return value;
+}
+
+void print_json_value(Stream& stream, const String& key, const String& value)
+{
+    stream.print("\"" + key + "\": \"" + json_escape(value) + "\"");
+}
+
+void print_json_value(Stream& stream, const String& key, unsigned long value)
+{
+    stream.print("\"" + key + "\": \"" + json_escape(value) + "\"");
+}
+
 void http_listen()
 {
+    const int timeout_ms = 5000;
+    
     auto client = g_http_server.available();
     if(!client) {
         return;
     }
+    
+    Serial.println("New HTTP connection, reading request...");
 
-    while(client.available()) {
+    unsigned long start_ms = millis();
+    while(client.available() && start_ms + timeout_ms < millis()) {
         client.readString();
     }
+    
+    if(start_ms + timeout_ms < millis()) {
+        Serial.println("HTTP read timeout!");
+        return;
+    }
+    
+    Serial.println("Sending HTTP response...");
     
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: application/json");
     client.println("Connection: close");
     client.println();
     client.print("{");
-// TODO: write diagnostic stuff here
+    print_json_value(client, "last_coffee_start_ms", g_last_coffee_start_ms); client.print(",");
+    print_json_value(client, "last_slack_response", g_slack.get_last_response());
     client.println("}");
     client.flush();
 
@@ -203,11 +213,11 @@ void setup()
     pinMode(INPUT_BUTTON_PIN, INPUT);
     pinMode(CHIP_SELECT_PIN, OUTPUT);
 
-    g_has_sd_card = energonsoftware::init_sd(CHIP_SELECT_PIN);
+    bool have_sd_card = energonsoftware::init_sd(CHIP_SELECT_PIN);
     Serial.print("Have SD card? ");
-    Serial.println(g_has_sd_card ? "Yes" : "No");
+    Serial.println(have_sd_card ? "Yes" : "No");
 
-    if(g_has_sd_card) {
+    if(have_sd_card) {
         g_config.read_from_sd();
     }
 

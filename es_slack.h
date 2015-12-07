@@ -30,10 +30,6 @@ namespace energonsoftware
         static const uint16_t SlackApiPort = 443;
         static const unsigned long TimeoutMs = 60000;
 
-    private:
-        static void send_packet(Client& client, const char* const uri);
-        static void recv_response(Client& client);
-
     public:
         Slack();
         virtual ~Slack() throw() { }
@@ -44,6 +40,8 @@ namespace energonsoftware
 
         void set_username(const String& username) { _username = username; }
         const String& get_username() const { return _username; }
+        
+        const String& get_last_response() const { return _last_response; }
 
     public:
         bool connect(Client& client);
@@ -53,12 +51,16 @@ namespace energonsoftware
         void send_message(Client& client, const char* const channel, const char* const message);
 
     private:
+        void send_packet(Client& client, const char* const uri);
+        void recv_response(Client& client);
+    
         String build_start_rtm_uri() const;
         String build_post_message_uri(const char* const channel, const char* const message) const;
 
     private:
         String _api_token;
         String _username;
+        String _last_response;
     };
 }
 

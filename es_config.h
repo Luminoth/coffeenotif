@@ -72,6 +72,8 @@ namespace energonsoftware
         
         unsigned long get_coffee_brew_ms() const { return _coffee_brew_ms; }
         void set_coffee_brew_minutes(unsigned int coffee_brew_minutes) { _coffee_brew_ms = coffee_brew_minutes * 60000; }
+        
+        const String& get_random_coffee_notification(bool finished) const;
 
     public:
         // NOTE: this assumes the SD card is available
