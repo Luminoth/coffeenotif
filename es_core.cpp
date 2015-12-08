@@ -52,7 +52,7 @@ namespace energonsoftware
         Serial.print(timeout_ms);
         Serial.println("ms...");
 
-        uint32_t start_ms = millis();
+        unsigned long start_ms = millis();
         while(stream.available() < 1) {
             if(millis() >= start_ms + timeout_ms) {
                 Serial.println("Stream timeout!");
@@ -81,6 +81,26 @@ namespace energonsoftware
                 result += '%';
                 result += DEC2HEX[ch >> 4];
                 result += DEC2HEX[ch & 0x0F];
+            }
+            ++current;
+        }
+
+        return result;
+    }
+    
+    String json_escape(const char* const value)
+    {
+        String result;
+        
+        const char* current = value;
+        while('\0' != *current) {
+            char ch = *current;
+            if('"' == ch) {
+                result += "\\\"";
+            } else if('\\' == ch) {
+                result += "\\\\";
+            } else {
+                result += ch;
             }
             ++current;
         }

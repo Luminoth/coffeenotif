@@ -32,7 +32,7 @@ namespace energonsoftware
     private:
         static const int NtpPacketSize = 48;
         static const uint16_t NtpPort = 123;
-        static const unsigned long TimeoutMs = 60000;
+        static const uint32_t TimeoutMs = 60000;
         static const unsigned long SeventyYearsSeconds = 2208988800UL;
 
     private:

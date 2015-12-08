@@ -28,7 +28,7 @@ namespace energonsoftware
     private:
         static const char SlackApiHost[];
         static const uint16_t SlackApiPort = 443;
-        static const unsigned long TimeoutMs = 60000;
+        static const uint32_t TimeoutMs = 60000;
 
     public:
         Slack();

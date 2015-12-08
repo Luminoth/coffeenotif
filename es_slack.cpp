@@ -96,6 +96,7 @@ namespace energonsoftware
 
         _last_response = client.readString();
         Serial.println("Slack API response: " + _last_response);
+        // TODO: should we try to parse anything out of this?
     }
 
     String Slack::build_start_rtm_uri() const

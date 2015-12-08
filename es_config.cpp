@@ -42,7 +42,8 @@ namespace energonsoftware
         : _wifi_encryption_type(ENC_TYPE_NONE), _wifi_ssid(), _wifi_wep_key(), _wifi_wep_key_index(0), _wifi_wpa_password(),
             _use_dhcp(true), _static_ip_address(),
             _local_ntp_port(2123), _ntp_host("pool.ntp.org"), _ntp_update_rate_ms(3600000),
-            _slack_api_token(), _slack_username(), _slack_channel()
+            _slack_api_token(), _slack_username(), _slack_channel(),
+            _coffee_brew_ms(60000)
     {
     }
     
@@ -91,6 +92,8 @@ namespace energonsoftware
         if(config_line.length() <= 0 || config_line[0] == '#') {
             return true;
         }
+        
+        // TODO
         
         return true;
     }

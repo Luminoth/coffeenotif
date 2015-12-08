@@ -1,5 +1,5 @@
-1. Implement the HTTP server
-2. Handle more non-DHCP settings
-3. Handle WEP
-4. Fix the NTP/RTC code
-5. General cleanup
+* Find a way to get an SD card reader working (http://forum.arduino.cc/index.php?topic=364248.0)
+* Handle more non-DHCP settings
+* Handle WEP
+* Fix the NTP/RTC code
+* General cleanup

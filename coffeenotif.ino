@@ -49,12 +49,20 @@ const uint32_t INPUT_BUTTON_PIN = 2;
 const uint32_t CHIP_SELECT_PIN = 10;
 //// END PIN SETTINGS
 
+const uint32_t SLEEP_TIME_MS = 1000;
+
 energonsoftware::Config g_config;
+#if defined ARDUINO_SAMD_ZERO
+RTCZero g_rtc;
+#endif
 energonsoftware::WiFi g_wifi;
 energonsoftware::Slack g_slack;
 WiFiServer g_http_server(80);
 WiFiSSLClient g_slack_client;
 
+volatile bool g_button_pushed = false;
+
+uint32_t g_coffee_brew_count = 0;
 unsigned long g_last_coffee_start_ms = 0;
 
 void update_rtc()
@@ -62,35 +70,21 @@ void update_rtc()
     static WiFiUDP ntp_client;
     static unsigned long last_update_ms = 0;
     
-#if defined ARDUINO_SAMD_ZERO
-    static RTCZero rtc;
-#endif
-    
-    uint32_t current_ms = millis();
+    unsigned long current_ms = millis();
     if(last_update_ms > 0 && last_update_ms + g_config.get_ntp_update_rate_ms() >= current_ms) {
         return;
     }
 
     static energonsoftware::Ntp ntp;
 #if defined ARDUINO_SAMD_ZERO
-    ntp.set_rtc(rtc, ntp_client, g_config.get_local_ntp_port(), g_config.get_ntp_host().c_str());
+    ntp.set_rtc(g_rtc, ntp_client, g_config.get_local_ntp_port(), g_config.get_ntp_host().c_str());
 #endif
     last_update_ms = current_ms;
 }
 
-bool poll_button_released()
+void on_button_released()
 {
-    static int last_button_state = LOW;
-    
-    bool button_released = false;
-
-    int current_button_state = digitalRead(INPUT_BUTTON_PIN);
-    if(LOW == current_button_state && HIGH == last_button_state) {
-        button_released = true;
-    }
-
-    last_button_state = current_button_state;
-    return button_released;
+    g_button_pushed = true;
 }
 
 void start_slack()
@@ -118,10 +112,14 @@ void notify_slack_channel(bool finished)
 
 void start_coffee_brewing()
 {
-    uint32_t current_ms = millis();
+    unsigned long current_ms = millis();
     if(0 != g_last_coffee_start_ms && current_ms < g_last_coffee_start_ms + g_config.get_coffee_brew_ms()) {
+        Serial.println("Coffee brew in progress, denying new start request!");
         return;
     }
+    
+    Serial.println("Coffee is brewing!");
+    ++g_coffee_brew_count;
 
     g_last_coffee_start_ms = current_ms;
     analogWrite(BREWING_LED_PIN, 255);
@@ -130,30 +128,26 @@ void start_coffee_brewing()
 
 void update_coffee_brewing()
 {
-    uint32_t current_ms = millis();
+    unsigned long current_ms = millis();
     if(0 == g_last_coffee_start_ms || current_ms < g_last_coffee_start_ms + g_config.get_coffee_brew_ms()) {
         return;
     }
+    
+    Serial.println("Coffee is done!");
 
     g_last_coffee_start_ms = 0;
     analogWrite(BREWING_LED_PIN, 0);
     notify_slack_channel(true);
 }
 
-String json_escape(const String& value)
-{
-    // TODO
-    return value;
-}
-
 void print_json_value(Stream& stream, const String& key, const String& value)
 {
-    stream.print("\"" + key + "\": \"" + json_escape(value) + "\"");
+    stream.print("\"" + key + "\": \"" + energonsoftware::json_escape(value.c_str()) + "\"");
 }
 
 void print_json_value(Stream& stream, const String& key, unsigned long value)
 {
-    stream.print("\"" + key + "\": \"" + json_escape(value) + "\"");
+    stream.print("\"" + key + "\": " + value);
 }
 
 void http_listen()
@@ -184,6 +178,7 @@ void http_listen()
     client.println("Connection: close");
     client.println();
     client.print("{");
+    print_json_value(client, "coffee_brew_count", g_coffee_brew_count); client.print(",");
     print_json_value(client, "last_coffee_start_ms", g_last_coffee_start_ms); client.print(",");
     print_json_value(client, "last_slack_response", g_slack.get_last_response());
     client.println("}");
@@ -212,6 +207,11 @@ void setup()
     pinMode(BREWING_LED_PIN, OUTPUT);
     pinMode(INPUT_BUTTON_PIN, INPUT);
     pinMode(CHIP_SELECT_PIN, OUTPUT);
+    
+#if defined ARDUINO_SAMD_ZERO
+    Serial.println("Initializing RTC...");
+    g_rtc.begin();
+#endif
 
     bool have_sd_card = energonsoftware::init_sd(CHIP_SELECT_PIN);
     Serial.print("Have SD card? ");
@@ -241,6 +241,16 @@ void setup()
     Serial.println("Initializing Slack...");
     g_slack.set_api_token(g_config.get_slack_api_token());
     g_slack.set_username(g_config.get_slack_username());
+    
+    Serial.println("Attaching interrupts...");
+#if defined ARDUINO_SAMD_ZERO
+    int button_interrupt = INPUT_BUTTON_PIN;
+#else
+    int button_interrupt = digitalPinToInterrupt(INPUT_BUTTON_PIN);
+#endif
+    attachInterrupt(button_interrupt, on_button_released, FALLING);
+    
+    Serial.println("Ready!");
 }
 
 void loop()
@@ -254,10 +264,13 @@ void loop()
         start_slack();
     }
 
-    if(poll_button_released()) {
+    if(g_button_pushed) {
+        g_button_pushed = false;
         start_coffee_brewing();
     }
     update_coffee_brewing();
 
     http_listen();
+    
+    delay(SLEEP_TIME_MS);
 }

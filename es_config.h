@@ -70,8 +70,8 @@ namespace energonsoftware
         const String& get_slack_channel() const { return _slack_channel; }
         void set_slack_channel(const String& slack_channel) { _slack_channel = slack_channel; }
         
-        unsigned long get_coffee_brew_ms() const { return _coffee_brew_ms; }
-        void set_coffee_brew_minutes(unsigned int coffee_brew_minutes) { _coffee_brew_ms = coffee_brew_minutes * 60000; }
+        uint32_t get_coffee_brew_ms() const { return _coffee_brew_ms; }
+        void set_coffee_brew_minutes(uint32_t coffee_brew_minutes) { _coffee_brew_ms = coffee_brew_minutes * 60000; }
         
         const String& get_random_coffee_notification(bool finished) const;
 
@@ -95,13 +95,13 @@ namespace energonsoftware
         
         uint16_t _local_ntp_port;
         String _ntp_host;
-        unsigned long _ntp_update_rate_ms;
+        uint32_t _ntp_update_rate_ms;
 
         String _slack_api_token;
         String _slack_username;
         String _slack_channel;
 
-        unsigned long _coffee_brew_ms;
+        uint32_t _coffee_brew_ms;
     };
 }
 
