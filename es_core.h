@@ -32,8 +32,6 @@ namespace energonsoftware
     bool poll_timeout(Stream& stream, uint32_t timeout_ms);
 
     String uri_encode(const char* const uri);
-    
-    String json_escape(const char* const value);
 }
 
 #endif

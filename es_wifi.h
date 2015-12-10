@@ -35,6 +35,10 @@ namespace energonsoftware
         static void print_signal_strength();
         static void print_connection_info();
 
+    private:
+        static const int KeepAliveMs = 300000;
+        static const int KeepAliveTimeoutMs = 30000;
+
     public:
         WiFi();
         virtual ~WiFi() throw() { }
@@ -71,6 +75,7 @@ namespace energonsoftware
 
         bool connect(int error_led_pin=-1);
         void disconnect();
+        void keepalive(bool force=false);
 
         String get_local_ip_address_str() const;
 
@@ -87,6 +92,7 @@ namespace energonsoftware
 
         bool _connected;
         uint32_t _reconnect_delay_ms;
+        unsigned long _last_keepalive_ms;
     };
 }
 

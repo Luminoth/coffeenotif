@@ -20,6 +20,7 @@
 #include <RTCZero.h>
 #endif
 
+#include <ArduinoJson.h>
 #include <SD.h>
 #include <SPI.h>
 #include <WiFi101.h>
@@ -140,20 +141,8 @@ void update_coffee_brewing()
     notify_slack_channel(true);
 }
 
-void print_json_value(Stream& stream, const String& key, const String& value)
-{
-    stream.print("\"" + key + "\": \"" + energonsoftware::json_escape(value.c_str()) + "\"");
-}
-
-void print_json_value(Stream& stream, const String& key, unsigned long value)
-{
-    stream.print("\"" + key + "\": " + value);
-}
-
 void http_listen()
-{
-    const int timeout_ms = 5000;
-    
+{   
     auto client = g_http_server.available();
     if(!client) {
         return;
@@ -161,30 +150,40 @@ void http_listen()
     
     Serial.println("New HTTP connection, reading request...");
 
-    unsigned long start_ms = millis();
-    while(client.available() && start_ms + timeout_ms < millis()) {
-        client.readString();
+    String request;
+    while(client.available()) {
+        request += client.readString();
     }
-    
-    if(start_ms + timeout_ms < millis()) {
-        Serial.println("HTTP read timeout!");
-        return;
-    }
-    
+
     Serial.println("Sending HTTP response...");
+
+    StaticJsonBuffer<JSON_OBJECT_SIZE(3)> json_buffer;
+    JsonObject& root = json_buffer.createObject();
+    root["coffee_brew_count"] = g_coffee_brew_count;
+    root["last_coffee_start_ms"] = g_last_coffee_start_ms;
+    root["last_slack_response"] = g_slack.get_last_response();
     
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: application/json");
     client.println("Connection: close");
     client.println();
-    client.print("{");
-    print_json_value(client, "coffee_brew_count", g_coffee_brew_count); client.print(",");
-    print_json_value(client, "last_coffee_start_ms", g_last_coffee_start_ms); client.print(",");
-    print_json_value(client, "last_slack_response", g_slack.get_last_response());
-    client.println("}");
+    root.printTo(client);
     client.flush();
 
     client.stop();    
+}
+
+void handle_input()
+{
+    while(Serial.available()) {
+        // TODO: handle more commands
+        String command = Serial.readString();
+        if(command == "keepalive") {
+            g_wifi.keepalive(true);
+        } else {
+            Serial.println("Unknown command: " + command);
+        }
+    }
 }
 
 void setup()
@@ -256,6 +255,8 @@ void setup()
 void loop()
 {
     bool connected = g_wifi.connect(ERROR_LED_PIN);
+
+    handle_input();
 
     update_rtc();
 

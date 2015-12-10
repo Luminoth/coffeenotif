@@ -87,24 +87,4 @@ namespace energonsoftware
 
         return result;
     }
-    
-    String json_escape(const char* const value)
-    {
-        String result;
-        
-        const char* current = value;
-        while('\0' != *current) {
-            char ch = *current;
-            if('"' == ch) {
-                result += "\\\"";
-            } else if('\\' == ch) {
-                result += "\\\\";
-            } else {
-                result += ch;
-            }
-            ++current;
-        }
-
-        return result;
-    }
 }

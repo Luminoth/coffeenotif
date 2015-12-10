@@ -98,7 +98,7 @@ namespace energonsoftware
             _ssid(), _encryption_type(ENC_TYPE_NONE),
             _wep_key(), _wep_key_index(0),
             _wpa_password(),
-            _connected(false), _reconnect_delay_ms(10 * 1000)
+            _connected(false), _reconnect_delay_ms(10 * 1000), _last_keepalive_ms(0)
     {
     }
 
@@ -125,6 +125,8 @@ namespace energonsoftware
 
     bool WiFi::connect(int error_led_pin)
     {
+        keepalive();
+        
         uint8_t status = ::WiFi.status();
         if(WL_CONNECTED == status) {
             return false;
@@ -166,6 +168,7 @@ namespace energonsoftware
 
         Serial.println("Connection successful!");
         _connected = true;
+        _last_keepalive_ms = millis();
         print_connection_info();
 
         return true;
@@ -185,5 +188,39 @@ namespace energonsoftware
         IPAddress ip_address = ::WiFi.localIP();
         sprintf(ipstr, "%d.%d.%d.%d", ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
         return ipstr;
+    }
+
+    void WiFi::keepalive(bool force)
+    {
+        if(!force && (!_connected || _last_keepalive_ms + KeepAliveMs > millis())) {
+            return;
+        }
+
+        _last_keepalive_ms = millis();
+      
+        static WiFiClient client;
+
+        Serial.println("Checking connection to www.google.com:80...");
+        if(!client.connect("www.google.com", 80)) {
+            Serial.println("Connect failed, trying www.microsoft.com:80...");
+            if(!client.connect("www.microsoft.com", 80)) {
+                Serial.println("Disconnect detected, dropping WiFi!");
+                ::WiFi.disconnect();
+                return;
+            }
+        }
+
+        client.print("GET / HTTP/1.1");
+        client.println("User-Agent: ArduinoWiFi/1.1");
+        client.println("Connection: close");
+        client.println();
+        client.flush();
+
+        if(!energonsoftware::poll_timeout(client, KeepAliveTimeoutMs)) {
+            Serial.println("Disconnect detected, dropping WiFi!");
+            ::WiFi.disconnect();
+            return;
+        }
+        Serial.println("Still alive!");
     }
 }

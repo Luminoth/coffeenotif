@@ -33,7 +33,7 @@ namespace energonsoftware
     const char Slack::SlackApiHost[] = "slack.com";
 
     Slack::Slack()
-        : _api_token(), _username(), _last_response()
+        : _api_token(), _username(), _json_buffer(), _last_response()
     {
     }
 
@@ -86,23 +86,48 @@ namespace energonsoftware
         client.println("Connection: close");
 
         client.println();
+        client.flush();
     }
 
-    void Slack::recv_response(Client& client)
+    JsonObject& Slack::recv_response(Client& client)
     {
         if(!energonsoftware::poll_timeout(client, TimeoutMs)) {
-            return;
+            return JsonObject::invalid();
         }
 
-        _last_response = client.readString();
-        Serial.println("Slack API response: " + _last_response);
-        // TODO: should we try to parse anything out of this?
+        // NOTE: not enough memory available to read the response
+        // from rtm.start, so for that call, this will always fail
+        _last_response = String();
+        while(client.available()) {
+            _last_response += client.readString();
+        }
+        //Serial.println("Raw Slack API response: " + _last_response);
+
+        int index = _last_response.indexOf("\r\n\r\n");
+        if(index < 0) {
+            Serial.println("Invalid Slack API HTTP response!");
+            return JsonObject::invalid();
+        }
+
+        JsonObject& root = _json_buffer.parseObject(_last_response.substring(index + 1));
+        if(root == JsonObject::invalid()) {
+            Serial.println("Invalid JSON response!");
+            return root;
+        }
+        
+        Serial.println("Slack API response:");
+        root.printTo(Serial);
+        Serial.println();
+        return root;
     }
 
     String Slack::build_start_rtm_uri() const
     {
         return String("/api/rtm.start")
-            + "?token=" + energonsoftware::uri_encode(_api_token.c_str());
+            + "?token=" + energonsoftware::uri_encode(_api_token.c_str())
+            + "&simple_latest=true"
+            + "&no_unreads=true"
+            + "&scope=" + energonsoftware::uri_encode("identify,client");
     }
 
     String Slack::build_post_message_uri(const char* const channel, const char* const message) const

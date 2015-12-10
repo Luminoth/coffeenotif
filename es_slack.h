@@ -19,6 +19,7 @@
 #if !defined __ES_SLACK_H__
 #define __ES_SLACK_H__
 
+#include <ArduinoJson.h>
 #include <Client.h>
 
 namespace energonsoftware
@@ -52,7 +53,7 @@ namespace energonsoftware
 
     private:
         void send_packet(Client& client, const char* const uri);
-        void recv_response(Client& client);
+        JsonObject& recv_response(Client& client);
     
         String build_start_rtm_uri() const;
         String build_post_message_uri(const char* const channel, const char* const message) const;
@@ -60,6 +61,8 @@ namespace energonsoftware
     private:
         String _api_token;
         String _username;
+
+        StaticJsonBuffer<512> _json_buffer;
         String _last_response;
     };
 }
