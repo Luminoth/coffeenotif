@@ -63,6 +63,7 @@ WiFiSSLClient g_slack_client;
 
 volatile bool g_button_pushed = false;
 
+int g_connect_count = 0;
 uint32_t g_coffee_brew_count = 0;
 unsigned long g_last_coffee_start_ms = 0;
 
@@ -91,13 +92,20 @@ void on_button_released()
 void start_slack()
 {
     Serial.println("Starting Slack RTM session...");
-    
-    const String message("Listening at http://" + g_wifi.get_local_ip_address_str() + "/");
 
     analogWrite(SLACK_LED_PIN, 255);
 
     g_slack.start(g_slack_client);
-    g_slack.send_message(g_slack_client, g_config.get_slack_channel().c_str(), message.c_str());
+
+    static String last_ip_address_string;
+
+    String current_ip_address_string = g_wifi.get_local_ip_address_str();
+    if(last_ip_address_string != current_ip_address_string) {
+        last_ip_address_string = current_ip_address_string;
+
+        const String message("Listening at http://" + current_ip_address_string + "/");
+        g_slack.send_message(g_slack_client, g_config.get_slack_channel().c_str(), message.c_str());
+    }
 
     analogWrite(SLACK_LED_PIN, 0);
 }
@@ -150,15 +158,16 @@ void http_listen()
     
     Serial.println("New HTTP connection, reading request...");
 
-    String request;
+    /*String request;
     while(client.available()) {
         request += client.readString();
-    }
+    }*/
 
     Serial.println("Sending HTTP response...");
 
     StaticJsonBuffer<JSON_OBJECT_SIZE(3)> json_buffer;
     JsonObject& root = json_buffer.createObject();
+    root["connect_count"] = g_connect_count;
     root["coffee_brew_count"] = g_coffee_brew_count;
     root["last_coffee_start_ms"] = g_last_coffee_start_ms;
     root["last_slack_response"] = g_slack.get_last_response();
@@ -168,6 +177,7 @@ void http_listen()
     client.println("Connection: close");
     client.println();
     root.printTo(client);
+    client.println();
     client.flush();
 
     client.stop();    
@@ -219,6 +229,29 @@ void setup()
     if(have_sd_card) {
         g_config.read_from_sd();
     }
+else {
+    g_config.set_wifi_encryption_type(ENC_TYPE_CCMP);
+    
+#if 0
+    g_config.set_wifi_ssid("unicron");
+    g_config.set_wifi_wpa_password("cibertr0n");
+
+    g_config.set_slack_api_token("xoxb-15507100897-eqDvbgnGC0kuUtKg2SVZAaDj");
+    g_config.set_slack_username("derp_bot");
+    g_config.set_slack_channel("#general");
+    
+    g_config.set_coffee_brew_minutes(1);
+#else
+    g_config.set_wifi_ssid("Glu-Guest");
+    g_config.set_wifi_wpa_password("gportlandwifi");
+
+    g_config.set_slack_api_token("xoxb-15587952946-WEJuzU2R9NKxnF6TSvhEm4nV");
+    g_config.set_slack_username("coffee_bot");
+    g_config.set_slack_channel("#_general");
+    
+    g_config.set_coffee_brew_minutes(6);
+#endif
+}
 
     g_wifi.set_encryption_type(g_config.get_wifi_encryption_type());
     g_wifi.set_ssid(g_config.get_wifi_ssid());
@@ -261,6 +294,7 @@ void loop()
     update_rtc();
 
     if(connected) {
+        ++g_connect_count;
         g_http_server.begin();
         start_slack();
     }
