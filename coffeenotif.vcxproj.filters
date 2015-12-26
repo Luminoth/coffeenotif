@@ -31,6 +31,9 @@
     <None Include="TODO.md">
       <Filter>Solution Files</Filter>
     </None>
+    <None Include="config.cfg">
+      <Filter>Solution Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.coffeenotif.vsarduino.h">
@@ -51,6 +54,9 @@
     <ClInclude Include="es_udp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="es_config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="es_wifi.cpp">
@@ -66,6 +72,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="es_udp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="es_config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
