@@ -52,7 +52,7 @@ namespace energonsoftware
         Serial.print(timeout_ms);
         Serial.println("ms...");
 
-        unsigned long start_ms = millis();
+        uint32_t start_ms = millis();
         while(stream.available() < 1) {
             if(millis() >= start_ms + timeout_ms) {
                 Serial.println("Stream timeout!");

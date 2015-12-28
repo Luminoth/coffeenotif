@@ -7,6 +7,9 @@ Arduino project to notify a Slack channel when the coffee maker is started
 * Arduino WiFi101 Shield and Library
 * SD Card Reader and Library (not yet working - http://forum.arduino.cc/index.php?topic=364248.0)
 * RTCZero Library
+* HashMap Library - http://playground.arduino.cc/Code/HashMap
+  * Make this change: void reset(){ hashCode = hash(); mappedValue = map(); }
+* Arduino JSON library
 
 ## Setup
 

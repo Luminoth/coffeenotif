@@ -21,6 +21,7 @@
 #endif
 
 #include <ArduinoJson.h>
+#include <HashMap.h>
 #include <SD.h>
 #include <SPI.h>
 #include <WiFi101.h>
@@ -32,6 +33,8 @@
 #include "es_wifi.h"
 
 const char VERSION[] = "1.0";
+
+const unsigned long SERIAL_BAUD_RATE = 115200;//9600;
 
 //// PIN SETTINGS
 // https://www.arduino.cc/en/Guide/ArduinoZero
@@ -65,14 +68,14 @@ volatile bool g_button_pushed = false;
 
 int g_connect_count = 0;
 uint32_t g_coffee_brew_count = 0;
-unsigned long g_last_coffee_start_ms = 0;
+uint32_t g_last_coffee_start_ms = 0;
 
 void update_rtc()
 {
     static WiFiUDP ntp_client;
-    static unsigned long last_update_ms = 0;
+    static uint32_t last_update_ms = 0;
     
-    unsigned long current_ms = millis();
+    uint32_t current_ms = millis();
     if(last_update_ms > 0 && last_update_ms + g_config.get_ntp_update_rate_ms() >= current_ms) {
         return;
     }
@@ -121,7 +124,7 @@ void notify_slack_channel(bool finished)
 
 void start_coffee_brewing()
 {
-    unsigned long current_ms = millis();
+    uint32_t current_ms = millis();
     if(0 != g_last_coffee_start_ms && current_ms < g_last_coffee_start_ms + g_config.get_coffee_brew_ms()) {
         Serial.println("Coffee brew in progress, denying new start request!");
         return;
@@ -137,7 +140,7 @@ void start_coffee_brewing()
 
 void update_coffee_brewing()
 {
-    unsigned long current_ms = millis();
+    uint32_t current_ms = millis();
     if(0 == g_last_coffee_start_ms || current_ms < g_last_coffee_start_ms + g_config.get_coffee_brew_ms()) {
         return;
     }
@@ -151,7 +154,7 @@ void update_coffee_brewing()
 
 void http_listen()
 {   
-    auto client = g_http_server.available();
+    WiFiClient client = g_http_server.available();
     if(!client) {
         return;
     }
@@ -198,7 +201,7 @@ void handle_input()
 
 void setup()
 {
-    energonsoftware::init_serial(9600);
+    energonsoftware::init_serial(SERIAL_BAUD_RATE);
 
     // if analog input pin 0 is unconnected, random analog
     // noise will cause the call to randomSeed() to generate
@@ -226,32 +229,11 @@ void setup()
     Serial.print("Have SD card? ");
     Serial.println(have_sd_card ? "Yes" : "No");
 
+    g_config.init();
     if(have_sd_card) {
         g_config.read_from_sd();
     }
-else {
-    g_config.set_wifi_encryption_type(ENC_TYPE_CCMP);
-    
-#if 0
-    g_config.set_wifi_ssid("unicron");
-    g_config.set_wifi_wpa_password("cibertr0n");
-
-    g_config.set_slack_api_token("xoxb-15507100897-eqDvbgnGC0kuUtKg2SVZAaDj");
-    g_config.set_slack_username("derp_bot");
-    g_config.set_slack_channel("#general");
-    
-    g_config.set_coffee_brew_minutes(1);
-#else
-    g_config.set_wifi_ssid("Glu-Guest");
-    g_config.set_wifi_wpa_password("gportlandwifi");
-
-    g_config.set_slack_api_token("xoxb-15587952946-WEJuzU2R9NKxnF6TSvhEm4nV");
-    g_config.set_slack_username("coffee_bot");
-    g_config.set_slack_channel("#_general");
-    
-    g_config.set_coffee_brew_minutes(6);
-#endif
-}
+    g_config.dump();
 
     g_wifi.set_encryption_type(g_config.get_wifi_encryption_type());
     g_wifi.set_ssid(g_config.get_wifi_ssid());

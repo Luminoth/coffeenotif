@@ -67,6 +67,8 @@ extern "C" void __cxa_pure_virtual() {;}
 #define portInputRegister(P)
 #define portModeRegister(P)
 #include <..\coffeenotif\coffeenotif.ino>
+#include <..\coffeenotif\es_config.cpp>
+#include <..\coffeenotif\es_config.h>
 #include <..\coffeenotif\es_core.cpp>
 #include <..\coffeenotif\es_core.h>
 #include <..\coffeenotif\es_ntp.cpp>

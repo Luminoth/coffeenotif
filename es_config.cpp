@@ -37,14 +37,51 @@ namespace energonsoftware
     const size_t COFFEE_FINISHED_NOTIF_COUNT = sizeof(COFFEE_FINISHED_NOTIFS) / sizeof(COFFEE_FINISHED_NOTIFS[0]);
     
     const char Config::CONFIG_FILE[] = "config.cfg";
+
+    const String Config::WIFI_ENCRYPTION_TYPE("WIFI_ENCRYPTION_TYPE");
+    const String Config::WIFI_SSID("WIFI_SSID");
+    const String Config::WIFI_WEP_KEY("WIFI_WEP_KEY");
+    const String Config::WIFI_WEP_KEY_INDEX("WIFI_WEP_KEY_INDEX");
+    const String Config::WIFI_WPA_PASSWORD("WIFI_WPA_PASSWORD");
+        
+    const String Config::USE_DHCP("USE_DHCP");
+    const String Config::IP_ADDRESS("IP_ADDRESS");
+        
+    const String Config::LOCAL_NTP_PORT("LOCAL_NTP_PORT");
+    const String Config::NTP_HOST("NTP_HOST");
+    const String Config::NTP_UPDATE_RATE_MINUTES("NTP_UPDATE_RATE_MINUTES");
+
+    const String Config::SLACK_API_TOKEN("SLACK_API_TOKEN");
+    const String Config::SLACK_USERNAME("SLACK_USERNAME");
+    const String Config::SLACK_CHANNEL("SLACK_CHANNEL");
+
+    const String Config::COFFEE_BREW_MS("COFFEE_BREW_MS");
     
     Config::Config()
-        : _wifi_encryption_type(ENC_TYPE_NONE), _wifi_ssid(), _wifi_wep_key(), _wifi_wep_key_index(0), _wifi_wpa_password(),
-            _use_dhcp(true), _static_ip_address(),
-            _local_ntp_port(2123), _ntp_host("pool.ntp.org"), _ntp_update_rate_ms(3600000),
-            _slack_api_token(), _slack_username(), _slack_channel(),
-            _coffee_brew_ms(60000)
+        : _hash_array(), _config_map(_hash_array, CONFIG_SIZE)
     {
+    }
+
+    void Config::init()
+    {
+        _config_map[0](WIFI_ENCRYPTION_TYPE, String(ENC_TYPE_NONE));
+        _config_map[1](WIFI_SSID, "");
+        _config_map[2](WIFI_WEP_KEY, "");
+        _config_map[3](WIFI_WEP_KEY_INDEX, "0");
+        _config_map[4](WIFI_WPA_PASSWORD, "");
+
+        _config_map[5](USE_DHCP, "true");
+        _config_map[6](IP_ADDRESS, "");
+
+        _config_map[7](LOCAL_NTP_PORT, "2123");
+        _config_map[8](NTP_HOST, "pool.ntp.org");
+        _config_map[9](NTP_UPDATE_RATE_MINUTES, "60");
+
+        _config_map[10](SLACK_API_TOKEN, "");
+        _config_map[11](SLACK_USERNAME, "");
+        _config_map[12](SLACK_CHANNEL, "");
+
+        _config_map[13](COFFEE_BREW_MS, "60000");
     }
     
     bool Config::read_from_sd()
@@ -57,7 +94,7 @@ namespace energonsoftware
         if(!configFile) {
             Serial.print("Unable to open config file '");
             Serial.print(CONFIG_FILE);
-            Serial.print("'!");
+            Serial.println("'!");
             return false;
         }
         
@@ -70,13 +107,33 @@ namespace energonsoftware
         
         return parse_config(config);
     }
+
+    void Config::dump()
+    {
+        Serial.println("Config:");
+        for(size_t i=0; i<CONFIG_SIZE; ++i) {
+            auto v = _config_map[i];
+            Serial.print(v.getHash());
+            Serial.print(" = ");
+            Serial.println(v.getValue());
+        }
+    }
     
     bool Config::parse_config(const String& config)
     {
-        for(int i=0; i<config.length(); ++i) {
+        for(size_t i=0; i<config.length(); ++i) {
+            char ch = config[i];
+            if(isspace(ch)) {
+                continue;
+            }
+
             String current_line;
-            while(i<config.length() && i != '\r' && i != '\n') {
-                current_line += config[i++];
+            while('\r' != ch && '\n' != ch) {
+                current_line += ch;
+                if(++i >= config.length()) {
+                    break;
+                }
+                ch = config[i];
             }
 
             current_line.trim();
@@ -92,9 +149,28 @@ namespace energonsoftware
         if(config_line.length() <= 0 || config_line[0] == '#') {
             return true;
         }
-        
-        // TODO
-        
+
+        int idx = config_line.indexOf('=');
+        if(idx < 0) {
+            return false;
+        }
+
+        if(idx >= config_line.length() - 1) {
+            return true;
+        }
+
+        String key = config_line.substring(0, idx);
+        String value = config_line.substring(idx+1);
+
+        byte keyIndex = _config_map.getIndexOf(key);
+        /*Serial.print("Setting config value (");
+        Serial.print(keyIndex);
+        Serial.print("): ");
+        Serial.print(key);
+        Serial.print(" = ");
+        Serial.println(value);*/
+        _config_map[keyIndex](key, value);
+
         return true;
     }
     
